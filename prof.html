@@ -1,52 +1,60 @@
 <!DOCTYPE html><html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>RunCycle — Prof</title>
 <style>
-:root{--bg:#0f172a;--ink:#e5e7eb;--muted:#94a3b8;--line:#243042;--panel:#0b1220;--accent:#2563eb}
-*{box-sizing:border-box}
-body{font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);margin:0}
-header,footer{border-block:1px solid var(--line);padding:18px;text-align:center}
-main{max-width:980px;margin:0 auto;padding:18px}
-.card{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
-.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
-.btn{display:inline-block;padding:12px 16px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);margin-right:8px;cursor:pointer}
-input,select,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
-.preset{border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--panel);cursor:pointer;margin:6px 0}
-.banner{position:sticky;top:8px;display:flex;gap:10px;justify-content:space-between;align-items:center;padding:10px;border:1px solid #374151;border-radius:12px;background:var(--panel);font-weight:700}
-.pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:4px 8px;color:var(--muted);font-size:14px}
-.overlay{position:fixed;inset:0;background:rgba(15,23,42,.96);display:grid;place-items:center;z-index:99}
-.overlay>div{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;max-width:360px;width:92%}
+:root{--bg:#0b1020;--ink:#e6e9ef;--muted:#9aa4b2;--line:#222b3c;--panel:#0f172a;--primary:#3b82f6;--accent:#8b5cf6}
+*{box-sizing:border-box}html,body{margin:0}
+body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:radial-gradient(1200px 800px at 50% -10%,#13203e,#0b1020);color:var(--ink)}
+header,footer{border-block:1px solid var(--line);padding:22px;text-align:center}
+main{max-width:980px;margin:0 auto;padding:20px}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));border:1px solid var(--line);border-radius:18px;padding:18px;margin:12px 0;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:12px 16px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;text-decoration:none;font-weight:600}
+.btn.primary{background:var(--primary);color:white}
+input,select,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:18px}
+.preset{border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--panel);cursor:pointer;margin:6px 0;display:grid;gap:6px}
+.banner{position:sticky;top:10px;display:flex;gap:12px;justify-content:space-between;align-items:center;padding:12px;border:1px solid #2c3951;border-radius:14px;background:var(--panel);font-weight:800}
+.code{font:800 28px/1 ui-monospace,Menlo,Consolas,monospace}
+.pill{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:6px 10px;color:var(--muted);font-size:14px}
+.overlay{position:fixed;inset:0;background:rgba(3,6,14,.96);display:grid;place-items:center;z-index:99}
+.overlay>div{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;max-width:360px;width:92%}
 .badge{font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:999px;background:#111827}
+h2{margin:6px 0 10px}
 </style>
 <body>
 <div id="gate" class="overlay">
   <div>
     <h3>🔒 Accès Prof</h3>
-    <p style="color:var(--muted)">Entrez le code (ou utilisez <code>?p=57</code> / <code>#57</code>).</p>
+    <p style="color:var(--muted)">Entrer le code (ou ajoutez <code>?p=57</code> / <code>#57</code> à l’URL).</p>
     <div style="display:flex;gap:8px">
       <input id="gateCode" type="password" inputmode="numeric" placeholder="Code" style="flex:1">
-      <button class="btn" onclick="(function(){var v=(document.getElementById('gateCode').value||'').trim(); if(v==='57'){document.getElementById('gate').style.display='none';} else {document.getElementById('err').style.display='block';}})()">Ouvrir</button>
+      <button class="btn primary" onclick="(function(){var v=(document.getElementById('gateCode').value||'').trim(); if(v==='57'){document.getElementById('gate').style.display='none';} else {document.getElementById('err').style.display='block';}})()">Ouvrir</button>
     </div>
     <div id="err" style="display:none;color:#ef4444;margin-top:6px">Code incorrect</div>
     <script>(function(){var u=location.search+location.hash;if(u.includes('p=57')||u.includes('#57')){var g=document.getElementById('gate');if(g)g.style.display='none';}})();</script>
   </div>
 </div>
 
-<header><h1>RunCycle — Prof <span class="badge">Inline</span></h1><div style="color:var(--muted)">Séances type / personnalisées • Code oral</div></header>
+<header><h1>RunCycle — Prof <span class="badge">v2</span></h1><div style="color:var(--muted)">Séances type / personnalisées • Code oral</div></header>
 <main>
-  <div class="banner">CODE ÉLÈVES : <span id="code">—</span> <button class="btn" onclick="navigator.clipboard&&navigator.clipboard.writeText(document.getElementById('code').textContent)">Copier</button></div>
-
-  <div class="card">
-    <b>⭐ Séances type</b>
-    <div class="preset" onclick="tile('S1')">S1 — Test 6’ (VMA)</div>
-    <div class="preset" onclick="tile('S2')">S2 — 2×6’ @90% (r=3’)</div>
-    <div class="preset" onclick="tile('S3')">S3 — 3×4’ 80/90/100% (r=2’)</div>
-    <div class="preset" onclick="tile('S4')">S4 — 4×3’ 90→95% (r=2’)</div>
-    <div class="preset" onclick="tile('S5')">S5 — Éval 4×3’ @95% (r=2’)</div>
-    <div style="color:var(--muted);font-size:14px;margin-top:6px">Cliquer une tuile remplit le formulaire ci-dessous.</div>
+  <div class="banner">
+    <div>CODE ÉLÈVES : <span id="code" class="code">—</span></div>
+    <div class="pill"><span id="sid">—</span></div>
+    <button class="btn" onclick="navigator.clipboard&&navigator.clipboard.writeText(document.getElementById('code').textContent)">Copier</button>
   </div>
 
   <div class="card">
-    <b>🗓️ Créer / choisir la séance</b>
+    <h2>⭐ Séances type</h2>
+    <div class="grid">
+      <div class="preset" onclick="tile('S1')"><b>S1 • Test 6’ (VMA)</b><span style='color:var(--muted)'>1×6’ — estimation</span></div>
+      <div class="preset" onclick="tile('S2')"><b>S2 • 2×6’ @90%</b><span style='color:var(--muted)'>r=3’ — régularité</span></div>
+      <div class="preset" onclick="tile('S3')"><b>S3 • 3×4’ 80/90/100%</b><span style='color:var(--muted)'>r=2’ — différencier</span></div>
+      <div class="preset" onclick="tile('S4')"><b>S4 • 4×3’ 90→95%</b><span style='color:var(--muted)'>r=2’ — projet</span></div>
+      <div class="preset" onclick="tile('S5')"><b>S5 • Éval 4×3’ @95%</b><span style='color:var(--muted)'>r=2’ — ±0,5 km/h</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>🗓️ Créer / choisir</h2>
     <div class="grid">
       <div><label>Sélection</label><select id="preset"><option value="S1">S1</option><option value="S2" selected>S2</option><option value="S3">S3</option><option value="S4">S4</option><option value="S5">S5</option></select></div>
       <div><label>Date</label><input id="sDate" type="date"></div>
@@ -60,9 +68,8 @@ input,select,textarea{width:100%;padding:10px;border-radius:10px;border:1px soli
     </div>
     <div style="margin-top:8px">
       <button class="btn" onclick="applyPreset(); gen()">↺ Charger séance type</button>
-      <button class="btn" style="background:#2563eb" onclick="gen()">🔐 Générer / actualiser le code</button>
+      <button class="btn primary" onclick="gen()">🔐 Générer / actualiser le code</button>
     </div>
-    <div style="margin-top:8px" class="pill">SeanceID: <span id="sid">—</span></div>
     <div style="margin-top:8px"><label>Remplacer le code élèves (optionnel)</label><input id="manual" placeholder="ex: 202B"></div>
   </div>
 

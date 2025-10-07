@@ -1,40 +1,41 @@
 <!DOCTYPE html><html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>RunCycle — Élève</title>
 <style>
-:root{--bg:#0f172a;--ink:#e5e7eb;--muted:#94a3b8;--line:#243042;--panel:#0b1220}
-*{box-sizing:border-box}
-body{font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);margin:0}
-header,footer{border-block:1px solid var(--line);padding:18px;text-align:center}
-main{max-width:980px;margin:0 auto;padding:18px}
-.card{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
-.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
-.btn{display:inline-block;padding:12px 16px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);margin-right:8px;cursor:pointer}
-input,select,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
-.pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:4px 8px;color:var(--muted);font-size:14px}
-table{width:100%;border-collapse:collapse}th,td{border:1px solid var(--line);padding:6px;text-align:left}
-.timer{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.time{font:700 28px/1 ui-monospace,Menlo,Consolas,monospace;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:#111827}
+:root{--bg:#0b1020;--ink:#e6e9ef;--muted:#9aa4b2;--line:#222b3c;--panel:#0f172a;--ok:#22c55e;--warn:#f59e0b;--err:#ef4444}
+*{box-sizing:border-box}html,body{margin:0}
+body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:radial-gradient(1200px 800px at 50% -10%,#13203e,#0b1020);color:var(--ink)}
+header,footer{border-block:1px solid var(--line);padding:22px;text-align:center}
+main{max-width:980px;margin:0 auto;padding:20px}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));border:1px solid var(--line);border-radius:18px;padding:18px;margin:12px 0;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.btn{display:inline-flex;align-items:center;gap:10px;padding:12px 16px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;text-decoration:none;font-weight:700}
+input,select,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:18px}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid var(--line);padding:8px;text-align:left}
+.timer{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.time{font:800 34px/1 ui-monospace,Menlo,Consolas,monospace;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:#111827}
+.badge{display:inline-block;padding:6px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.finish{padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#0a1a36;margin-top:8px;display:none}
 </style>
 <body>
-<header><h1>RunCycle — Élèves</h1><div style="color:#94a3b8">Code → VMA + piste → Cibles → Chrono → Distances + RPE → QR</div></header>
+<header><h1>RunCycle — Élèves <span class="badge">v2</span></h1><div style="color:#94a3b8">Code → VMA + piste → Cibles → Chrono → Distances + RPE → QR</div></header>
 <main>
   <div class="card">
-    <b>🔓 Charger la séance</b>
+    <h2>🔓 Charger la séance</h2>
     <div class="grid">
       <div><label>Code séance</label><input id="code" placeholder="ex: 202B"></div>
       <div><label>Piste (m)</label><input id="piste" type="number" min="50" value="200"></div>
     </div>
     <div style="margin-top:8px"><button class="btn" onclick="load()">✅ Utiliser le code</button></div>
-    <div id="desc" class="pill" style="display:none;margin-top:8px"></div>
+    <div id="desc" class="badge" style="display:none;margin-top:8px"></div>
   </div>
 
   <div class="grid" id="profiles" style="display:none">
-    <div class="card"><b>👤 Élève A</b><div class="grid">
+    <div class="card"><h2>👤 Élève A</h2><div class="grid">
       <div><label>Nom</label><input id="aNom"></div><div><label>Prénom</label><input id="aPre"></div>
       <div><label>Classe</label><input id="aCla"></div><div><label>Sexe</label><select id="aSex"><option>F</option><option>M</option></select></div>
       <div><label>VMA (km/h)</label><input id="aVMA" type="number" step="0.1" oninput="targets()"></div>
     </div></div>
-    <div class="card"><b>👤 Élève B</b><div class="grid">
+    <div class="card"><h2>👤 Élève B</h2><div class="grid">
       <div><label>Nom</label><input id="bNom"></div><div><label>Prénom</label><input id="bPre"></div>
       <div><label>Classe</label><input id="bCla"></div><div><label>Sexe</label><select id="bSex"><option>F</option><option selected>M</option></select></div>
       <div><label>VMA (km/h)</label><input id="bVMA" type="number" step="0.1" oninput="targets()"></div>
@@ -42,20 +43,22 @@ table{width:100%;border-collapse:collapse}th,td{border:1px solid var(--line);pad
   </div>
 
   <div id="work" class="card" style="display:none">
-    <b>🎯 Cibles & Chrono</b>
-    <div id="tg" class="pill" style="display:block;margin:8px 0">Renseignez la VMA…</div>
+    <h2>🎯 Cibles & Chrono</h2>
+    <div id="tg" class="badge" style="display:block;margin:8px 0">Renseignez les VMA…</div>
     <div class="timer">
-      <span class="pill" id="phase">Prêt</span>
+      <span class="badge" id="phase">Prêt</span>
       <span class="time" id="clock">00:00</span>
-      <button class="btn" onclick="start()">▶️ Start</button>
-      <button class="btn" onclick="pause()">⏸️ Pause</button>
-      <button class="btn" onclick="reset()">↺ Reset</button>
-      <span class="pill">Bloc <span id="i">0</span>/<span id="n">0</span></span>
+      <button class="btn" id="bStart">▶️ Start</button>
+      <button class="btn" id="bPause">⏸️ Pause</button>
+      <button class="btn" id="bReset">↺ Reset</button>
+      <span class="badge">Bloc <span id="i">0</span>/<span id="n">0</span></span>
+      <label class="badge" style="cursor:pointer"><input type="checkbox" id="beep" style="transform:scale(1.1);margin-right:8px"> Bip phases</label>
     </div>
+    <div id="finished" class="finish">✅ Séance terminée — bravo !</div>
   </div>
 
   <div id="saisie" class="card" style="display:none">
-    <b>📝 Saisie des blocs & RPE</b>
+    <h2>📝 Saisie des blocs & RPE</h2>
     <table><thead><tr><th>Bloc</th><th>Distance A (m)</th><th>RPE A</th><th>Distance B (m)</th><th>RPE B</th></tr></thead><tbody id="tb"></tbody></table>
     <div style="margin-top:8px">
       <button class="btn" onclick="qr('duo')">🔳 QR DUO</button>
@@ -73,34 +76,92 @@ const PRESETS={"101A":{T:"Test 6' (VMA)",B:1,Db:6,R:0,P:[]},
 "303C":{T:"3×4' 80/90/100% (r=2')",B:3,Db:4,R:2,P:[0.8,0.9,1.0]},
 "404D":{T:"4×3' 90→95% (r=2')",B:4,Db:3,R:2,P:[0.9,0.92,0.94,0.95]},
 "505E":{T:"Éval 4×3' @95% (r=2')",B:4,Db:3,R:2,P:[0.95,0.95,0.95,0.95]}};
-let S=null, timer=null, rem=0, ph='Prêt', b=0;
+let S=null, timer=null, rem=0, ph='Prêt', b=0, running=false, ctx=null, osc=null;
+
+function tone(ms=200, freq=880){
+  try{
+    if(!document.getElementById('beep').checked) return;
+    ctx = ctx || new (window.AudioContext||window.webkitAudioContext)();
+    osc = ctx.createOscillator(); const gn=ctx.createGain(); osc.frequency.value=freq; gn.gain.value=0.05;
+    osc.connect(gn); gn.connect(ctx.destination); osc.start(); setTimeout(()=>{osc.stop();}, ms);
+  }catch(e){}
+}
+
 function load(){
   const c=(document.getElementById('code').value||'').trim().toUpperCase(); if(!PRESETS[c]){alert('Code inconnu : 101A..505E'); return;}
   const piste=+document.getElementById('piste').value||200;
   const p=PRESETS[c]; S={T:p.T,B:p.B,Db:p.Db,R:p.R,P:p.P,Piste:piste};
   document.getElementById('desc').textContent=p.T+' • blocs: '+p.B+' • '+p.Db+"' r="+p.R+"' • piste "+piste+' m'; document.getElementById('desc').style.display='inline-block';
   document.getElementById('profiles').style.display='grid'; document.getElementById('work').style.display='block'; document.getElementById('saisie').style.display='block';
-  document.getElementById('n').textContent=S.B; build(); targets();
+  document.getElementById('n').textContent=S.B; build(); targets(); reset();
+  // Bind buttons once session is loaded
+  document.getElementById('bStart').onclick=start;
+  document.getElementById('bPause').onclick=pause;
+  document.getElementById('bReset').onclick=reset;
 }
+
 function build(){
   const tb=document.getElementById('tb'); tb.innerHTML=''; for(let i=1;i<=S.B;i++){tb.insertAdjacentHTML('beforeend','<tr><td>'+i+'</td><td><input id=a_m_'+i+' type=number min=0></td><td><input id=a_r_'+i+' type=number min=0 max=10></td><td><input id=b_m_'+i+' type=number min=0></td><td><input id=b_r_'+i+' type=number min=0 max=10></td></tr>');}
 }
+
 function mpm(k){return k*1000/60}
 function targets(){
   const a=+document.getElementById('aVMA').value||0, b=+document.getElementById('bVMA').value||0, pct=S.P.length?S.P:Array(S.B).fill(1);
   const dA=a?pct.map(p=>Math.round(mpm(a*p)*S.Db)):[], dB=b?pct.map(p=>Math.round(mpm(b*p)*S.Db)):[];
-  document.getElementById('tg').innerHTML=(a||b)?('Cibles — A: <b>'+ (dA.join(' • ')||'—') + '</b> | B: <b>' + (dB.join(' • ')||'—') + '</b>'):'Renseignez la VMA…';
+  document.getElementById('tg').innerHTML=(a||b)?('Cibles — A: <b>'+ (dA.join(' • ')||'—') + '</b> | B: <b>' + (dB.join(' • ')||'—') + '</b>'):'Renseignez les VMA…';
 }
-function start(){ if(timer) clearInterval(timer); tick(); timer=setInterval(tick,1000); }
-function pause(){ if(timer) clearInterval(timer); }
-function reset(){ if(timer) clearInterval(timer); ph='Prêt'; b=0; rem=0; document.getElementById('phase').textContent='Prêt'; document.getElementById('clock').textContent='00:00'; document.getElementById('i').textContent='0'; }
+
 function fmt(s){const m=Math.floor(s/60),x=s%60; return String(m).padStart(2,'0')+':'+String(x).padStart(2,'0'); }
+
+function setPhase(newPhase, seconds){
+  ph = newPhase; rem = seconds; document.getElementById('phase').textContent = ph; document.getElementById('clock').textContent = fmt(rem);
+  tone(120, ph==='Effort'?880:520);
+}
+
 function tick(){
-  const t=document.getElementById('clock'), phs=document.getElementById('phase'), idx=document.getElementById('i');
-  if(rem>0){rem--; t.textContent=fmt(rem);} else {
-    if(ph==='Prêt' || ph==='Récup'){ if(b>=S.B){ clearInterval(timer); phs.textContent='Terminé'; return; } b++; idx.textContent=b; ph='Effort'; phs.textContent='Effort'; rem=S.Db*60; t.textContent=fmt(rem); }
-    else{ if(S.R>0){ ph='Récup'; phs.textContent='Récup'; rem=S.R*60; t.textContent=fmt(rem); } else { if(b>=S.B){ clearInterval(timer); phs.textContent='Terminé'; return; } b++; idx.textContent=b; ph='Effort'; phs.textContent='Effort'; rem=S.Db*60; t.textContent=fmt(rem); } }
+  if(!running) return;
+  if(rem>0){ rem--; document.getElementById('clock').textContent = fmt(rem); return; }
+  // rem == 0 → bascule
+  if(ph==='Prêt' || ph==='Récup'){
+    if(b>=S.B){ // FIN SÉANCE
+      stopAll(true); return;
+    }
+    b++; document.getElementById('i').textContent=b;
+    setPhase('Effort', S.Db*60);
+  }else{ // Effort → Récup ou Effort suivant si R=0
+    if(S.R>0){ setPhase('Récup', S.R*60); }
+    else{
+      if(b>=S.B){ stopAll(true); return; }
+      b++; document.getElementById('i').textContent=b;
+      setPhase('Effort', S.Db*60);
+    }
   }
+}
+
+function start(){
+  if(!S || running) return;
+  running = true; document.getElementById('finished').style.display='none';
+  if(ph==='Prêt'){ b=0; document.getElementById('i').textContent=b; }
+  if(rem<=0){ // initialise première étape
+    if(ph==='Prêt'){ setPhase('Effort', S.Db*60); }
+    else if(ph==='Récup'){ setPhase('Effort', S.Db*60); }
+    else{ setPhase('Effort', rem||S.Db*60); }
+  }
+  if(window._timer) clearInterval(window._timer);
+  window._timer = setInterval(tick, 1000);
+}
+
+function pause(){ running=false; if(window._timer) clearInterval(window._timer); }
+
+function stopAll(finished=false){
+  running=false; if(window._timer) clearInterval(window._timer);
+  document.getElementById('phase').textContent = finished ? 'Terminé' : 'Prêt';
+  document.getElementById('clock').textContent = '00:00';
+  if(finished){ document.getElementById('finished').style.display='block'; tone(300, 1000); }
+}
+
+function reset(){
+  stopAll(false); ph='Prêt'; b=0; rem=0; document.getElementById('i').textContent='0'; document.getElementById('finished').style.display='none';
 }
 function kmh(m, min){ return (m/1000)/(min/60) }
 function mean(a){ return a.reduce((x,y)=>x+y,0)/a.length }
