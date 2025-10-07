@@ -1,220 +1,121 @@
-
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>RunCycle — Mode Élèves (MVP)</title>
-  <link rel="stylesheet" href="./style.css" />
-</head>
+<!DOCTYPE html><html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RunCycle — Élève</title>
+<style>
+:root{--bg:#0f172a;--ink:#e5e7eb;--muted:#94a3b8;--line:#243042;--panel:#0b1220}
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);margin:0}
+header,footer{border-block:1px solid var(--line);padding:18px;text-align:center}
+main{max-width:980px;margin:0 auto;padding:18px}
+.card{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.btn{display:inline-block;padding:12px 16px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);margin-right:8px;cursor:pointer}
+input,select,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+.pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:4px 8px;color:var(--muted);font-size:14px}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid var(--line);padding:6px;text-align:left}
+.timer{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.time{font:700 28px/1 ui-monospace,Menlo,Consolas,monospace;padding:8px 12px;border:1px solid var(--line);border-radius:10px;background:#111827}
+</style>
 <body>
-  <header>
-    <h1>RunCycle — Mode Élèves (Binôme)</h1>
-    <div class="sub">Code → VMA + piste → Cibles → Chrono → Distances + RPE → QR DUO</div>
-  </header>
-  <main>
-    <section class="card">
-      <h2>🔓 Charger la séance</h2>
-      <div class="grid cols-2">
-        <div>
-          <label>Code séance (donné par le prof)</label>
-          <input id="unlockIn" placeholder="ex: 202B (S2)">
-        </div>
-        <div>
-          <label>Longueur de piste (m)</label>
-          <input id="ePiste" type="number" min="50" step="1" value="200" placeholder="ex: 180, 240, 325">
-        </div>
-      </div>
-      <div class="row" style="margin-top:10px">
-        <button class="btn primary" id="btnLoad">✅ Utiliser le code</button>
-        <a class="btn" href="./index.html">⬅️ Accueil</a>
-      </div>
-      <div id="seanceLoaded" class="card hidden" style="margin-top:12px"></div>
-    </section>
+<header><h1>RunCycle — Élèves</h1><div style="color:#94a3b8">Code → VMA + piste → Cibles → Chrono → Distances + RPE → QR</div></header>
+<main>
+  <div class="card">
+    <b>🔓 Charger la séance</b>
+    <div class="grid">
+      <div><label>Code séance</label><input id="code" placeholder="ex: 202B"></div>
+      <div><label>Piste (m)</label><input id="piste" type="number" min="50" value="200"></div>
+    </div>
+    <div style="margin-top:8px"><button class="btn" onclick="load()">✅ Utiliser le code</button></div>
+    <div id="desc" class="pill" style="display:none;margin-top:8px"></div>
+  </div>
 
-    <section class="grid cols-2 hidden" id="profiles">
-      <div class="card">
-        <h2>👤 Élève A</h2>
-        <div class="grid cols-2">
-          <div><label>Nom</label><input id="aNom" placeholder="DUPONT"></div>
-          <div><label>Prénom</label><input id="aPrenom" placeholder="Alice"></div>
-          <div><label>Classe</label><input id="aClasse" placeholder="4C"></div>
-          <div><label>Sexe</label><select id="aSexe"><option>F</option><option>M</option></select></div>
-          <div><label>VMA (km/h)</label><input id="aVMA" type="number" step="0.1"></div>
-        </div>
-      </div>
-      <div class="card">
-        <h2>👤 Élève B</h2>
-        <div class="grid cols-2">
-          <div><label>Nom</label><input id="bNom" placeholder="MARTIN"></div>
-          <div><label>Prénom</label><input id="bPrenom" placeholder="Noah"></div>
-          <div><label>Classe</label><input id="bClasse" placeholder="4C"></div>
-          <div><label>Sexe</label><select id="bSexe"><option>F</option><option selected>M</option></select></div>
-          <div><label>VMA (km/h)</label><input id="bVMA" type="number" step="0.1"></div>
-        </div>
-      </div>
-    </section>
+  <div class="grid" id="profiles" style="display:none">
+    <div class="card"><b>👤 Élève A</b><div class="grid">
+      <div><label>Nom</label><input id="aNom"></div><div><label>Prénom</label><input id="aPre"></div>
+      <div><label>Classe</label><input id="aCla"></div><div><label>Sexe</label><select id="aSex"><option>F</option><option>M</option></select></div>
+      <div><label>VMA (km/h)</label><input id="aVMA" type="number" step="0.1" oninput="targets()"></div>
+    </div></div>
+    <div class="card"><b>👤 Élève B</b><div class="grid">
+      <div><label>Nom</label><input id="bNom"></div><div><label>Prénom</label><input id="bPre"></div>
+      <div><label>Classe</label><input id="bCla"></div><div><label>Sexe</label><select id="bSex"><option>F</option><option selected>M</option></select></div>
+      <div><label>VMA (km/h)</label><input id="bVMA" type="number" step="0.1" oninput="targets()"></div>
+    </div></div>
+  </div>
 
-    <section id="sessionWork" class="card hidden">
-      <h2>🎯 Cibles & Chrono</h2>
-      <div id="targets" class="sub" style="margin-bottom:8px"></div>
-      <div class="timer">
-        <span class="pill" id="phase">Prêt</span>
-        <span class="time" id="tclock">00:00</span>
-        <button class="btn" id="tStart">▶️ Start</button>
-        <button class="btn" id="tPause">⏸️ Pause</button>
-        <button class="btn" id="tReset">↺ Reset</button>
-        <span class="pill">Bloc <span id="blocIdx">0</span>/<span id="blocTot">0</span></span>
-      </div>
-    </section>
+  <div id="work" class="card" style="display:none">
+    <b>🎯 Cibles & Chrono</b>
+    <div id="tg" class="pill" style="display:block;margin:8px 0">Renseignez la VMA…</div>
+    <div class="timer">
+      <span class="pill" id="phase">Prêt</span>
+      <span class="time" id="clock">00:00</span>
+      <button class="btn" onclick="start()">▶️ Start</button>
+      <button class="btn" onclick="pause()">⏸️ Pause</button>
+      <button class="btn" onclick="reset()">↺ Reset</button>
+      <span class="pill">Bloc <span id="i">0</span>/<span id="n">0</span></span>
+    </div>
+  </div>
 
-    <section id="saisieBlocs" class="card hidden">
-      <h2>📝 Saisie des blocs & RPE</h2>
-      <table>
-        <thead><tr><th>Bloc</th><th>Distance A (m)</th><th>RPE A (0–10)</th><th>Distance B (m)</th><th>RPE B (0–10)</th></tr></thead>
-        <tbody id="tbodyBlocs"></tbody>
-      </table>
-      <div class="row" style="margin-top:10px">
-        <button class="btn green" id="btnQRDuo">🔳 QR DUO (2 élèves)</button>
-        <button class="btn" id="btnQRA">QR A</button>
-        <button class="btn" id="btnQRB">QR B</button>
-      </div>
-      <div id="qrResult" class="card" style="margin-top:10px"></div>
-    </section>
-  </main>
-  <footer>RunCycle — Équipe EPS Lycée Vauban — Luxembourg — JB</footer>
+  <div id="saisie" class="card" style="display:none">
+    <b>📝 Saisie des blocs & RPE</b>
+    <table><thead><tr><th>Bloc</th><th>Distance A (m)</th><th>RPE A</th><th>Distance B (m)</th><th>RPE B</th></tr></thead><tbody id="tb"></tbody></table>
+    <div style="margin-top:8px">
+      <button class="btn" onclick="qr('duo')">🔳 QR DUO</button>
+      <button class="btn" onclick="qr('A')">QR A</button>
+      <button class="btn" onclick="qr('B')">QR B</button>
+    </div>
+    <div id="q" style="margin-top:8px"></div>
+  </div>
+</main>
+<footer>RunCycle — Équipe EPS Lycée Vauban — Luxembourg — JB</footer>
 
-  <script>
-    const PRESETS = {
-      "101A": { key:"S1", Titre:"Test 6' (estimation VMA)", Blocs:1, DureeBloc_min:6, Recup_min:0, Cible_%VMA:[], Notes:"" },
-      "202B": { key:"S2", Titre:"2×6' @ 90% VMA (r=3')", Blocs:2, DureeBloc_min:6, Recup_min:3, Cible_%VMA:[0.90,0.90], Notes:"" },
-      "303C": { key:"S3", Titre:"3×4' aux allures 80/90/100% (r=2')", Blocs:3, DureeBloc_min:4, Recup_min:2, Cible_%VMA:[0.80,0.90,1.00], Notes:"" },
-      "404D": { key:"S4", Titre:"4×3' projet @ 90–95% (r=2')", Blocs:4, DureeBloc_min:3, Recup_min:2, Cible_%VMA:[0.90,0.92,0.94,0.95], Notes:"" },
-      "505E": { key:"S5", Titre:"Éval 4×3' @ 95% (r=2')", Blocs:4, DureeBloc_min:3, Recup_min:2, Cible_%VMA:[0.95,0.95,0.95,0.95], Notes:"Objectif ±0,5 km/h." }
-    };
-    let current = null, timer=null, remaining=0, phase='Prêt', bloc=0;
-
-    function loadFromCode(){
-      const code = (document.getElementById('unlockIn').value||'').trim().toUpperCase();
-      if(!code){ alert('Entrez le code'); return; }
-      const preset = PRESETS[code];
-      if(!preset){ alert('Code inconnu : utilisez 101A..505E'); return; }
-      const piste = Number(document.getElementById('ePiste').value||200);
-      current = {...preset, Piste_m:piste, SeanceID:(new Date().toISOString().slice(0,10))+'_'+Math.random().toString(36).slice(2,6).toUpperCase()};
-      renderSeance(); buildBlocTable(); setupTimer();
-      document.getElementById('profiles').classList.remove('hidden');
-      document.getElementById('sessionWork').classList.remove('hidden');
-      document.getElementById('saisieBlocs').classList.remove('hidden');
-    }
-
-    function renderSeance(){
-      const s=current;
-      const div=document.getElementById('seanceLoaded');
-      div.innerHTML = '<div class="row"><span class="pill">'+s.Titre+'</span><span class="pill">Blocs: '+s.Blocs+' • '+s.DureeBloc_min+"' r="+s.Recup_min+"'</span><span class="pill">Piste: '+s.Piste_m+' m</span></div>';
-      div.classList.remove('hidden');
-      document.getElementById('blocTot').textContent = s.Blocs;
-    }
-
-    function buildBlocTable(){
-      const s=current, tb=document.getElementById('tbodyBlocs'); tb.innerHTML='';
-      for(let i=1;i<=s.Blocs;i++){
-        const tr=document.createElement('tr');
-        tr.innerHTML='<td>'+i+'</td>'+
-          '<td><input type="number" min="0" step="1" id="a_m_'+i+'" placeholder="m"></td>'+
-          '<td><input type="number" min="0" max="10" step="1" id="a_r_'+i+'" placeholder="RPE"></td>'+
-          '<td><input type="number" min="0" step="1" id="b_m_'+i+'" placeholder="m"></td>'+
-          '<td><input type="number" min="0" max="10" step="1" id="b_r_'+i+'" placeholder="RPE"></td>';
-        tb.appendChild(tr);
-      }
-      updateTargets();
-    }
-
-    function mPerMin(kmh){ return (kmh*1000)/60; }
-    function mean(arr){ return arr.reduce((a,b)=>a+b,0)/arr.length; }
-
-    function updateTargets(){
-      const s=current;
-      const aV=Number(document.getElementById('aVMA').value||0);
-      const bV=Number(document.getElementById('bVMA').value||0);
-      const pct = s.Cible_%VMA.length? s.Cible_%VMA : Array(s.Blocs).fill(1);
-      const dA = aV? pct.map(p=> Math.round(mPerMin(aV*p)*s.DureeBloc_min)) : [];
-      const dB = bV? pct.map(p=> Math.round(mPerMin(bV*p)*s.DureeBloc_min)) : [];
-      document.getElementById('targets').innerHTML = (aV||bV)
-        ? 'Cibles (m/bloc) — A: <b>'+(dA.join(' • ')||'—')+'</b> | B: <b>'+(dB.join(' • ')||'—')+'</b>'
-        : 'Renseignez la VMA pour voir vos cibles.';
-    }
-
-    function setupTimer(){
-      const s=current; phase='Prêt'; bloc=0; remaining=0;
-      const t=document.getElementById('tclock'), ph=document.getElementById('phase'), idx=document.getElementById('blocIdx');
-      function fmt(sec){ const m=Math.floor(sec/60), s=sec%60; return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); }
-      function tick(){
-        if(remaining>0){ remaining--; t.textContent=fmt(remaining); }
-        else{
-          if(phase==='Prêt' || phase==='Récup'){
-            if(bloc>=current.Blocs){ clearInterval(timer); ph.textContent='Terminé'; return; }
-            bloc++; idx.textContent=bloc; phase='Effort'; ph.textContent='Effort'; remaining=current.DureeBloc_min*60; t.textContent=fmt(remaining);
-          }else{
-            if(current.Recup_min>0){ phase='Récup'; ph.textContent='Récup'; remaining=current.Recup_min*60; t.textContent=fmt(remaining); }
-            else{
-              if(bloc>=current.Blocs){ clearInterval(timer); ph.textContent='Terminé'; return; }
-              bloc++; idx.textContent=bloc; phase='Effort'; ph.textContent='Effort'; remaining=current.DureeBloc_min*60; t.textContent=fmt(remaining);
-            }
-          }
-        }
-      }
-      document.getElementById('tStart').onclick = ()=>{ if(timer) clearInterval(timer); tick(); timer=setInterval(tick,1000); };
-      document.getElementById('tPause').onclick = ()=>{ if(timer) clearInterval(timer); };
-      document.getElementById('tReset').onclick = ()=>{ if(timer) clearInterval(timer); phase='Prêt'; bloc=0; remaining=0; ph.textContent='Prêt'; t.textContent='00:00'; idx.textContent='0'; };
-    }
-
-    function kmh(total_m, total_min){ return (total_m/1000)/(total_min/60); }
-
-    function genPayload(mode){
-      const s=current, n=s.Blocs;
-      const A={ Nom:(document.getElementById('aNom').value||'').toUpperCase(), Prénom:document.getElementById('aPrenom').value||'', Classe:document.getElementById('aClasse').value||'', Sexe:document.getElementById('aSexe').value||'', VMA:Number(document.getElementById('aVMA').value||0) };
-      const B={ Nom:(document.getElementById('bNom').value||'').toUpperCase(), Prénom:document.getElementById('bPrenom').value||'', Classe:document.getElementById('bClasse').value||'', Sexe:document.getElementById('bSexe').value||'', VMA:Number(document.getElementById('bVMA').value||0) };
-      const am=[], ar=[], bm=[], br=[]; for(let i=1;i<=n;i++){ am.push(Number(document.getElementById(`a_m_${i}`).value||0)); ar.push(Number(document.getElementById(`a_r_${i}`).value||0)); bm.push(Number(document.getElementById(`b_m_${i}`).value||0)); br.push(Number(document.getElementById(`b_r_${i}`).value||0)); }
-
-      const totalMin = s.Blocs * s.DureeBloc_min;
-      const vA = kmh(am.reduce((a,b)=>a+b,0), totalMin);
-      const vB = kmh(bm.reduce((a,b)=>a+b,0), totalMin);
-      const pct = s.Cible_%VMA.length? s.Cible_%VMA : Array(s.Blocs).fill(1);
-      const cibleA = A.VMA? (A.VMA * mean(pct)) : 0;
-      const cibleB = B.VMA? (B.VMA * mean(pct)) : 0;
-      const ecA = +(vA - cibleA).toFixed(2);
-      const ecB = +(vB - cibleB).toFixed(2);
-
-      if(mode==='duo'){
-        return { v:1, format:'duo', SeanceID:s.SeanceID, Seance:s.Titre, Piste_m:s.Piste_m,
-          eleves:[
-            { Nom:A.Nom, Prénom:A.Prénom, Classe:A.Classe, Sexe:A.Sexe, VMA:A.VMA, Blocs_m:am, RPE:ar, Vitesse_moy_km_h:+vA.toFixed(2), Ecart_km_h:ecA },
-            { Nom:B.Nom, Prénom:B.Prénom, Classe:B.Classe, Sexe:B.Sexe, VMA:B.VMA, Blocs_m:bm, RPE:br, Vitesse_moy_km_h:+vB.toFixed(2), Ecart_km_h:ecB }
-          ] };
-      } else if(mode==='soloA'){
-        return { v:1, format:'solo', SeanceID:s.SeanceID, Seance:s.Titre, Piste_m:s.Piste_m,
-          Nom:A.Nom, Prénom:A.Prénom, Classe:A.Classe, Sexe:A.Sexe, VMA:A.VMA, Blocs_m:am, RPE:ar, Vitesse_moy_km_h:+vA.toFixed(2), Ecart_km_h:ecA };
-      } else {
-        return { v:1, format:'solo', SeanceID:s.SeanceID, Seance:s.Titre, Piste_m:s.Piste_m,
-          Nom:B.Nom, Prénom:B.Prénom, Classe:B.Classe, Sexe:B.Sexe, VMA:B.VMA, Blocs_m:bm, RPE:br, Vitesse_moy_km_h:+vB.toFixed(2), Ecart_km_h:ecB };
-      }
-    }
-
-    function showQR(mode){
-      const payload = genPayload(mode);
-      const json = JSON.stringify(payload);
-      const url = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(json);
-      document.getElementById('qrResult').innerHTML = '<div class="row"><img alt="QR" src="'+url+'"><textarea style="width:100%;margin-top:10px" rows="5">'+json+'</textarea></div>';
-    }
-
-    document.getElementById('btnLoad').addEventListener('click', loadFromCode);
-    document.getElementById('aVMA').addEventListener('input', updateTargets);
-    document.getElementById('bVMA').addEventListener('input', updateTargets);
-    document.getElementById('ePiste').addEventListener('input', ()=>{ if(current){ current.Piste_m = Number(document.getElementById('ePiste').value||200); renderSeance(); updateTargets(); } });
-
-    document.getElementById('btnQRDuo').addEventListener('click', ()=>showQR('duo'));
-    document.getElementById('btnQRA').addEventListener('click', ()=>showQR('soloA'));
-    document.getElementById('btnQRB').addEventListener('click', ()=>showQR('soloB'));
-  </script>
-</body>
-</html>
+<script>
+const PRESETS={"101A":{T:"Test 6' (VMA)",B:1,Db:6,R:0,P:[]},
+"202B":{T:"2×6' @90% (r=3')",B:2,Db:6,R:3,P:[0.9,0.9]},
+"303C":{T:"3×4' 80/90/100% (r=2')",B:3,Db:4,R:2,P:[0.8,0.9,1.0]},
+"404D":{T:"4×3' 90→95% (r=2')",B:4,Db:3,R:2,P:[0.9,0.92,0.94,0.95]},
+"505E":{T:"Éval 4×3' @95% (r=2')",B:4,Db:3,R:2,P:[0.95,0.95,0.95,0.95]}};
+let S=null, timer=null, rem=0, ph='Prêt', b=0;
+function load(){
+  const c=(document.getElementById('code').value||'').trim().toUpperCase(); if(!PRESETS[c]){alert('Code inconnu : 101A..505E'); return;}
+  const piste=+document.getElementById('piste').value||200;
+  const p=PRESETS[c]; S={T:p.T,B:p.B,Db:p.Db,R:p.R,P:p.P,Piste:piste};
+  document.getElementById('desc').textContent=p.T+' • blocs: '+p.B+' • '+p.Db+"' r="+p.R+"' • piste "+piste+' m'; document.getElementById('desc').style.display='inline-block';
+  document.getElementById('profiles').style.display='grid'; document.getElementById('work').style.display='block'; document.getElementById('saisie').style.display='block';
+  document.getElementById('n').textContent=S.B; build(); targets();
+}
+function build(){
+  const tb=document.getElementById('tb'); tb.innerHTML=''; for(let i=1;i<=S.B;i++){tb.insertAdjacentHTML('beforeend','<tr><td>'+i+'</td><td><input id=a_m_'+i+' type=number min=0></td><td><input id=a_r_'+i+' type=number min=0 max=10></td><td><input id=b_m_'+i+' type=number min=0></td><td><input id=b_r_'+i+' type=number min=0 max=10></td></tr>');}
+}
+function mpm(k){return k*1000/60}
+function targets(){
+  const a=+document.getElementById('aVMA').value||0, b=+document.getElementById('bVMA').value||0, pct=S.P.length?S.P:Array(S.B).fill(1);
+  const dA=a?pct.map(p=>Math.round(mpm(a*p)*S.Db)):[], dB=b?pct.map(p=>Math.round(mpm(b*p)*S.Db)):[];
+  document.getElementById('tg').innerHTML=(a||b)?('Cibles — A: <b>'+ (dA.join(' • ')||'—') + '</b> | B: <b>' + (dB.join(' • ')||'—') + '</b>'):'Renseignez la VMA…';
+}
+function start(){ if(timer) clearInterval(timer); tick(); timer=setInterval(tick,1000); }
+function pause(){ if(timer) clearInterval(timer); }
+function reset(){ if(timer) clearInterval(timer); ph='Prêt'; b=0; rem=0; document.getElementById('phase').textContent='Prêt'; document.getElementById('clock').textContent='00:00'; document.getElementById('i').textContent='0'; }
+function fmt(s){const m=Math.floor(s/60),x=s%60; return String(m).padStart(2,'0')+':'+String(x).padStart(2,'0'); }
+function tick(){
+  const t=document.getElementById('clock'), phs=document.getElementById('phase'), idx=document.getElementById('i');
+  if(rem>0){rem--; t.textContent=fmt(rem);} else {
+    if(ph==='Prêt' || ph==='Récup'){ if(b>=S.B){ clearInterval(timer); phs.textContent='Terminé'; return; } b++; idx.textContent=b; ph='Effort'; phs.textContent='Effort'; rem=S.Db*60; t.textContent=fmt(rem); }
+    else{ if(S.R>0){ ph='Récup'; phs.textContent='Récup'; rem=S.R*60; t.textContent=fmt(rem); } else { if(b>=S.B){ clearInterval(timer); phs.textContent='Terminé'; return; } b++; idx.textContent=b; ph='Effort'; phs.textContent='Effort'; rem=S.Db*60; t.textContent=fmt(rem); } }
+  }
+}
+function kmh(m, min){ return (m/1000)/(min/60) }
+function mean(a){ return a.reduce((x,y)=>x+y,0)/a.length }
+function qr(mode){
+  const n=S.B, a={Nom:(document.getElementById('aNom').value||'').toUpperCase(),Prénom:document.getElementById('aPre').value||'',Classe:document.getElementById('aCla').value||'',Sexe:document.getElementById('aSex').value||'',VMA:+document.getElementById('aVMA').value||0},
+        b={Nom:(document.getElementById('bNom').value||'').toUpperCase(),Prénom:document.getElementById('bPre').value||'',Classe:document.getElementById('bCla').value||'',Sexe:document.getElementById('bSex').value||'',VMA:+document.getElementById('bVMA').value||0};
+  const am=[],ar=[],bm=[],br=[]; for(let i=1;i<=n;i++){am.push(+document.getElementById('a_m_'+i).value||0);ar.push(+document.getElementById('a_r_'+i).value||0);bm.push(+document.getElementById('b_m_'+i).value||0);br.push(+document.getElementById('b_r_'+i).value||0);}
+  const totMin=S.B*S.Db, vA=kmh(am.reduce((x,y)=>x+y,0),totMin), vB=kmh(bm.reduce((x,y)=>x+y,0),totMin), pct=S.P.length?S.P:Array(S.B).fill(1),
+        cibleA=a.VMA?(a.VMA*mean(pct)):0, cibleB=b.VMA?(b.VMA*mean(pct)):0, ecA=+(vA-cibleA).toFixed(2), ecB=+(vB-cibleB).toFixed(2);
+  let payload=null;
+  if(mode==='duo'){ payload={v:1,format:'duo',Seance:S.T,Piste_m:S.Piste,eleves:[{Nom:a.Nom,Prénom:a.Prénom,Classe:a.Classe,Sexe:a.Sexe,VMA:a.VMA,Blocs_m:am,RPE:ar,Vitesse_moy_km_h:+vA.toFixed(2),Ecart_km_h:ecA},{Nom:b.Nom,Prénom:b.Prénom,Classe:b.Classe,Sexe:b.Sexe,VMA:b.VMA,Blocs_m:bm,RPE:br,Vitesse_moy_km_h:+vB.toFixed(2),Ecart_km_h:ecB}]}; }
+  else if(mode==='A'){ payload={v:1,format:'solo',Seance:S.T,Piste_m:S.Piste,Nom:a.Nom,Prénom:a.Prénom,Classe:a.Classe,Sexe:a.Sexe,VMA:a.VMA,Blocs_m:am,RPE:ar,Vitesse_moy_km_h:+vA.toFixed(2),Ecart_km_h:ecA}; }
+  else { payload={v:1,format:'solo',Seance:S.T,Piste_m:S.Piste,Nom:b.Nom,Prénom:b.Prénom,Classe:b.Classe,Sexe:b.Sexe,VMA:b.VMA,Blocs_m:bm,RPE:br,Vitesse_moy_km_h:+vB.toFixed(2),Ecart_km_h:ecB}; }
+  const json=JSON.stringify(payload), url='https://api.qrserver.com/v1/create-qr-code/?size=220x220&data='+encodeURIComponent(json);
+  document.getElementById('q').innerHTML='<div><img alt="QR" src="'+url+'"><textarea rows="5" style="width:100%;margin-top:8px">'+json+'</textarea></div>';
+}
+</script>
+</body></html>
