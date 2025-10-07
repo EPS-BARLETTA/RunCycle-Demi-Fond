@@ -58,9 +58,19 @@ function loadCustomSession(code){
 
 // Lookup by code: short (presets) or extended (custom)
 function resolveByCode(code, context){
-  // context carries piste default, etc.
   if(!code) return null;
-  const isShort = /^[0-9]{3}[A-Z]$/.test(code);
+  const up = code.trim().toUpperCase();
+  // 1) Check hardcoded preset codes
+  const pkey = presetForCode(up);
+  if(pkey){
+    const p = PRESETS[pkey];
+    return {...p, Piste_m: context.Piste_m||400};
+  }
+  // 2) Extended custom code (local)
+  const s = loadCustomSession(up);
+  if(s) return s;
+  return null;
+}[A-Z]$/.test(code);
   if(isShort){
     // Map short code to preset index deterministically
     const keys = Object.keys(PRESETS);
@@ -88,4 +98,19 @@ window.RunCycleCore = {
   go, genShortCode, genExtendedCode, PRESETS, buildSession,
   saveCustomSession, resolveByCode,
   mPerMin, kmhFromMeters, mean
+, codeForPreset, presetForCode, PRESET_CODES};
+
+// --- Deterministic short codes for presets (3 digits + 1 letter) ---
+const PRESET_CODES = {
+  S1: "101A",
+  S2: "202B",
+  S3: "303C",
+  S4: "404D",
+  S5: "505E"
 };
+function codeForPreset(key){ return PRESET_CODES[key] || null; }
+function presetForCode(code){
+  const up = (code||'').trim().toUpperCase();
+  const entry = Object.entries(PRESET_CODES).find(([,v])=>v===up);
+  return entry? entry[0] : null;
+}
