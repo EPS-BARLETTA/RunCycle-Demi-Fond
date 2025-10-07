@@ -6,56 +6,49 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>RunCycle — Mode Élèves</title>
   <link rel="stylesheet" href="./style.css" />
-  <script src="./qr-loader.js" defer></script>
-  <script src="./qr.min.js" defer></script>
   <script src="./core.js" defer></script>
-  <script defer>
+  <script>
   document.addEventListener('DOMContentLoaded', ()=>{
     const C = window.RunCycleCore;
-    // Form refs
-    const pisteSel = document.getElementById('ePiste');
-    const unlockIn = document.getElementById('unlockIn');
+    const pisteIn = document.getElementById('ePiste');
+    const codeIn = document.getElementById('unlockIn');
     const seanceBox = document.getElementById('seanceLoaded');
-    const targets = document.getElementById('targets');
     const tbody = document.getElementById('tbodyBlocs');
+    const targets = document.getElementById('targets');
     const resultBox = document.getElementById('qrResult');
-
-    let currentSeance = null;
+    let currentSeance=null;
 
     function loadFromCode(){
-      const code = (unlockIn.value||'').trim().toUpperCase();
-      if(!code){ alert('Entrez le code donné par le prof'); return; }
-      const s = C.resolveByCode(code, {Piste_m: Number(pisteSel.value||400)});
+      const code=(codeIn.value||'').trim().toUpperCase();
+      if(!code){ alert('Entrez le code de la séance donné par le prof'); return; }
+      const s=C.resolveByCode(code,{Piste_m:Number(pisteIn.value||200)});
       if(!s){
-        // Try extended code stored locally (same device use-case)
-        const last = localStorage.getItem('RC_last_seance');
+        const last=localStorage.getItem('RC_last_seance');
         if(last){
-          const obj = JSON.parse(last);
-          if(obj.unlock===code){ currentSeance = obj.seance; renderSeance(); return; }
+          const obj=JSON.parse(last);
+          if((obj.unlock||'').toUpperCase()===code){ currentSeance=obj.seance; renderSeance(); return; }
         }
-        alert('Code inconnu sur cet appareil. Utilisez un code de présélection (4 caractères) ou demandez au prof de générer un code étendu sur cette tablette.');
+        alert('Code inconnu sur cet appareil. Utilisez un code type (101A…505E) ou un code perso enregistré sur cet appareil.');
         return;
       }
-      currentSeance = s;
-      renderSeance();
+      currentSeance=s; renderSeance();
     }
 
     function renderSeance(){
-      const s = currentSeance; if(!s) return;
-      seanceBox.innerHTML = '<div class="row"><span class="pill">'+s.Titre+'</span><span class="pill">Blocs: '+s.Blocs+' • '+s.DureeBloc_min+"' r="+s.Recup_min+"'</span><span class="pill">Piste: '+(Number(document.getElementById('ePiste').value||s.Piste_m||400))+' m</span></div><div class="sub" style="margin-top:6px">Consignes : '+(s.Consignes||'')+'</div>';
-      seanceBox.classList.remove('hidden');
-      buildBlocTable();
+      const s=currentSeance; if(!s) return;
+      seanceBox.innerHTML = '<div class="row"><span class="pill">'+s.Titre+'</span><span class="pill">Blocs: '+s.Blocs+' • '+s.DureeBloc_min+"' r="+s.Recup_min+"'</span><span class="pill">Piste: '+(Number(pisteIn.value||s.Piste_m||200))+' m</span></div><div class="sub" style="margin-top:6px">Consignes : '+(s.Consignes||'')+'</div>';
+      seanceBox.classList.remove('hidden'); buildBlocTable();
     }
 
     function buildBlocTable(){
-      const s = currentSeance; if(!s) return;
+      const s=currentSeance; if(!s) return;
       tbody.innerHTML='';
       for(let i=1;i<=s.Blocs;i++){
-        const tr = document.createElement('tr');
-        tr.innerHTML = '<td>'+i+'</td>'+
-          '<td><input type="number" min="0" step="1" id="a_m_'+i+'" placeholder="m"></td>'+
-          '<td><input type="number" min="0" max="10" step="1" id="a_r_'+i+'" placeholder="RPE"></td>'+
-          '<td><input type="number" min="0" step="1" id="b_m_'+i+'" placeholder="m"></td>'+
+        const tr=document.createElement('tr');
+        tr.innerHTML='<td>'+i+'</td>' +
+          '<td><input type="number" min="0" step="1" id="a_m_'+i+'" placeholder="m"></td>' +
+          '<td><input type="number" min="0" max="10" step="1" id="a_r_'+i+'" placeholder="RPE"></td>' +
+          '<td><input type="number" min="0" step="1" id="b_m_'+i+'" placeholder="m"></td>' +
           '<td><input type="number" min="0" max="10" step="1" id="b_r_'+i+'" placeholder="RPE"></td>';
         tbody.appendChild(tr);
       }
@@ -64,12 +57,12 @@
     }
 
     function updateTargets(){
-      const s = currentSeance; if(!s) return;
-      const aVMA = Number(document.getElementById('aVMA').value||0);
-      const bVMA = Number(document.getElementById('bVMA').value||0);
-      const pct = Array.isArray(s['Cible_%VMA'])? s['Cible_%VMA'] : Array(s.Blocs).fill(Number(s['Cible_%VMA']||0));
-      const cA = aVMA? pct.map(p=> Math.round(C.mPerMin(aVMA*p)*s.DureeBloc_min)) : [];
-      const cB = bVMA? pct.map(p=> Math.round(C.mPerMin(bVMA*p)*s.DureeBloc_min)) : [];
+      const s=currentSeance; if(!s) return;
+      const aVMA=Number(document.getElementById('aVMA').value||0);
+      const bVMA=Number(document.getElementById('bVMA').value||0);
+      const pct=Array.isArray(s['Cible_%VMA'])? s['Cible_%VMA'] : Array(s.Blocs).fill(Number(s['Cible_%VMA']||0));
+      const cA=aVMA? pct.map(p=> Math.round(C.mPerMin(aVMA*p)*s.DureeBloc_min)) : [];
+      const cB=bVMA? pct.map(p=> Math.round(C.mPerMin(bVMA*p)*s.DureeBloc_min)) : [];
       targets.innerHTML = (aVMA||bVMA)? 'Cibles (m/bloc) — A: <b>'+(cA.join(' • ')||'—')+'</b> | B: <b>'+(cB.join(' • ')||'—')+'</b>' : 'Renseignez la VMA pour voir vos cibles.';
     }
 
@@ -82,62 +75,48 @@
     }
 
     function genQR(mode){
-      if(typeof QRCode==='undefined'){ alert('Lib QR non dispo'); return; }
       if(!currentSeance){ alert('Séance non chargée'); return; }
-      const {s,A,B,am,ar,bm,br} = collectResults();
-      const totalMin = s.Blocs * s.DureeBloc_min;
-      const vA = C.kmhFromMeters(am.reduce((a,b)=>a+b,0), totalMin);
-      const vB = C.kmhFromMeters(bm.reduce((a,b)=>a+b,0), totalMin);
-      const pct = Array.isArray(s['Cible_%VMA'])? s['Cible_%VMA'] : Array(s.Blocs).fill(Number(s['Cible_%VMA']||0));
-      const cibleA = A.VMA? (A.VMA * C.mean(pct)) : 0;
-      const cibleB = B.VMA? (B.VMA * C.mean(pct)) : 0;
-      const ecA = +(vA - cibleA).toFixed(2);
-      const ecB = +(vB - cibleB).toFixed(2);
-      resultBox.innerHTML = '';
-      if(mode==='duo'){
-        const payload = { v:1, format:'duo', SeanceID:s.SeanceID, Seance:s.Titre, Piste_m:Number(pisteSel.value||s.Piste_m||400),
+      const {s,A,B,am,ar,bm,br}=collectResults();
+      const totalMin=s.Blocs*s.DureeBloc_min;
+      const vA=C.kmhFromMeters(am.reduce((a,b)=>a+b,0),totalMin);
+      const vB=C.kmhFromMeters(bm.reduce((a,b)=>a+b,0),totalMin);
+      const pct=Array.isArray(s['Cible_%VMA'])? s['Cible_%VMA'] : Array(s.Blocs).fill(Number(s['Cible_%VMA']||0));
+      const cibleA=A.VMA? (A.VMA*C.mean(pct)) : 0;
+      const cibleB=B.VMA? (B.VMA*C.mean(pct)) : 0;
+      const ecA=+(vA-cibleA).toFixed(2);
+      const ecB=+(vB-cibleB).toFixed(2);
+      resultBox.innerHTML='';
+      // QR code generator dependency removed earlier; we'll use fallback text box
+      const payload = (mode==='duo') ?
+        { v:1, format:'duo', SeanceID:s.SeanceID, Seance:s.Titre, Piste_m:Number(pisteIn.value||s.Piste_m||200),
           eleves:[
             { Nom:A.Nom, Prénom:A.Prénom, Classe:A.Classe, Sexe:A.Sexe, VMA:A.VMA, Blocs_m:am, RPE:ar, Vitesse_moy_km_h:+vA.toFixed(2), Ecart_km_h:ecA },
             { Nom:B.Nom, Prénom:B.Prénom, Classe:B.Classe, Sexe:B.Sexe, VMA:B.VMA, Blocs_m:bm, RPE:br, Vitesse_moy_km_h:+vB.toFixed(2), Ecart_km_h:ecB }
-          ]};
-        new QRCode(resultBox,{text:JSON.stringify(payload), width:220, height:220});
-      }else if(mode==='soloA'){
-        const payload = { v:1, format:'solo', SeanceID:s.SeanceID, Seance:s.Titre, Piste_m:Number(pisteSel.value||s.Piste_m||400),
-          Nom:A.Nom, Prénom:A.Prénom, Classe:A.Classe, Sexe:A.Sexe, VMA:A.VMA, Blocs_m:am, RPE:ar, Vitesse_moy_km_h:+vA.toFixed(2), Ecart_km_h:ecA };
-        new QRCode(resultBox,{text:JSON.stringify(payload), width:220, height:220});
-      }else if(mode==='soloB'){
-        const payload = { v:1, format:'solo', SeanceID:s.SeanceID, Seance:s.Titre, Piste_m:Number(pisteSel.value||s.Piste_m||400),
-          Nom:B.Nom, Prénom:B.Prénom, Classe:B.Classe, Sexe:B.Sexe, VMA:B.VMA, Blocs_m:bm, RPE:br, Vitesse_moy_km_h:+vB.toFixed(2), Ecart_km_h:ecB };
-        new QRCode(resultBox,{text:JSON.stringify(payload), width:220, height:220});
-      }
+          ]} :
+        (mode==='soloA' ?
+          { v:1, format:'solo', SeanceID:s.SeanceID, Seance:s.Titre, Piste_m:Number(pisteIn.value||s.Piste_m||200),
+            Nom:A.Nom, Prénom:A.Prénom, Classe:A.Classe, Sexe:A.Sexe, VMA:A.VMA, Blocs_m:am, RPE:ar, Vitesse_moy_km_h:+vA.toFixed(2), Ecart_km_h:ecA } :
+          { v:1, format:'solo', SeanceID:s.SeanceID, Seance:s.Titre, Piste_m:Number(pisteIn.value||s.Piste_m||200),
+            Nom:B.Nom, Prénom:B.Prénom, Classe:B.Classe, Sexe:B.Sexe, VMA:B.VMA, Blocs_m:bm, RPE:br, Vitesse_moy_km_h:+vB.toFixed(2), Ecart_km_h:ecB });
+      // Render payload text (ScanProf côté prof scannera le QR réel; ici on affiche JSON si lib absente)
+      resultBox.innerHTML = '<div style="padding:10px;border:1px dashed #555;border-radius:8px;max-width:500px"><div style="font:12px monospace;white-space:pre-wrap;word-break:break-word">'+
+        JSON.stringify(payload) + '</div><div class="sub" style="margin-top:6px">QR: si besoin on réactive la lib de génération.</div></div>';
     }
 
     document.getElementById('btnLoad').addEventListener('click', loadFromCode);
     document.getElementById('btnQRDuo').addEventListener('click', ()=>genQR('duo'));
     document.getElementById('btnQRA').addEventListener('click', ()=>genQR('soloA'));
     document.getElementById('btnQRB').addEventListener('click', ()=>genQR('soloB'));
-
-    // Update targets on VMA change
-    ['aVMA','bVMA'].forEach(id=>{
-      document.getElementById(id).addEventListener('input', ()=>{
-        if(currentSeance){ // recompute targets
-          const s=currentSeance; const pct = Array.isArray(s['Cible_%VMA'])? s['Cible_%VMA'] : Array(s.Blocs).fill(Number(s['Cible_%VMA']||0));
-          const aVMA = Number(document.getElementById('aVMA').value||0);
-          const bVMA = Number(document.getElementById('bVMA').value||0);
-          const cA = aVMA? pct.map(p=> Math.round(C.mPerMin(aVMA*p)*s.DureeBloc_min)) : [];
-          const cB = bVMA? pct.map(p=> Math.round(C.mPerMin(bVMA*p)*s.DureeBloc_min)) : [];
-          targets.innerHTML = (aVMA||bVMA)? 'Cibles (m/bloc) — A: <b>'+(cA.join(' • ')||'—')+'</b> | B: <b>'+(cB.join(' • ')||'—')+'</b>' : 'Renseignez la VMA pour voir vos cibles.';
-        }
-      });
-    });
-
+    document.getElementById('aVMA').addEventListener('input', updateTargets);
+    document.getElementById('bVMA').addEventListener('input', updateTargets);
+    document.getElementById('ePiste').addEventListener('input', ()=>{ if(currentSeance){ renderSeance(); }});
   });
   </script>
 </head>
 <body>
   <header>
     <h1>RunCycle — Mode Élèves (Binôme)</h1>
-    <div class="sub">Profil A/B → Code (sans scan) → Saisie blocs + RPE → QR DUO pour ScanProf</div>
+    <div class="sub">Profil A/B → Code → VMA + piste → Distances + RPE → QR DUO</div>
   </header>
   <main>
     <section class="grid cols-2">
@@ -167,8 +146,8 @@
       <h2>🔓 Charger la séance</h2>
       <div class="grid cols-2">
         <div>
-          <label>Code de déverrouillage</label>
-          <input id="unlockIn" placeholder="Code séance">
+          <label>Code séance (donné par le prof)</label>
+          <input id="unlockIn" placeholder="ex: 202B (S2)">
         </div>
         <div>
           <label>Longueur de piste (m)</label>

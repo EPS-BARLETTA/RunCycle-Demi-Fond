@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -5,13 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>RunCycle — Mode Prof</title>
   <link rel="stylesheet" href="./style.css" />
-  <script src="./qr-loader.js" defer></script>
-  <script src="./qr.min.js" defer></script>
   <script src="./core.js" defer></script>
-  <style>
-    .gate{position:fixed;inset:0;background:rgba(15,23,42,.96);display:grid;place-items:center;z-index:9999}
-    .gate-card{background:#0b1220;border:1px solid #253247;border-radius:16px;padding:20px;max-width:360px;width:92%}
-  </style>
 </head>
 <body>
   <div id="gate" class="gate">
@@ -81,7 +76,7 @@
         <button class="btn primary" id="btnGen">🔐 Générer / actualiser le code</button>
       </div>
       <div class="row" style="margin-top:12px">
-        <span class="pill">Code élèves : <span id="unlockCode">—</span></span>
+        <div class="code-banner" id="codeBanner">CODE ÉLÈVES : <span id="unlockCode">—</span></div>
         <span class="pill">SeanceID : <span id="sid">—</span></span>
       </div>
       <div class="grid cols-2" style="margin-top:12px">
@@ -91,6 +86,7 @@
           <div class="sub">Si rempli, c’est ce code qui sera affiché et stocké pour cette séance.</div>
         </div>
       </div>
+      <p class="sub" style="margin-top:6px">👉 Étapes : 1) Choisir la séance type  2) “↺ Charger séance type”  3) “🔐 Générer / actualiser le code”  4) Dicter le code aux élèves.</p>
       <div class="center" style="margin-top:16px"><a class="btn" href="./index.html">⬅️ Retour</a></div>
     </section>
   </main>
@@ -98,29 +94,13 @@
   <footer>RunCycle — Équipe EPS Lycée Vauban — Luxembourg — JB</footer>
 
   <script>
-  // Ultra-compatible gate (also supports ?p=57 or #57)
+  // Gate (57), URL unlock supported (?p=57 or #57)
   (function(){
-    function qp(name){ var m=location.search.match(new RegExp('[?&]'+name+'=([^&]+)')); return m? decodeURIComponent(m[1]) : null; }
-    function hideGate(){
-      var gate=document.getElementById('gate'); if(gate) gate.style.display='none';
-    }
-    function tryAuto(){
-      var hash=(location.hash||'').replace('#','').trim();
-      var p=(qp('p')||qp('code')||'').trim();
-      if(hash==='57'||p==='57') hideGate();
-    }
-    function bind(){
-      var gate=document.getElementById('gate'), btn=document.getElementById('gateBtn'), inp=document.getElementById('gateCode'), err=document.getElementById('gateErr');
-      function unlock(){
-        var v=(inp.value||'').trim();
-        if(v==='57'){ hideGate(); }
-        else { if(err) err.style.display='block'; }
-      }
-      if(btn) btn.addEventListener('click', unlock);
-      if(inp) inp.addEventListener('keydown', function(e){ if(e.key==='Enter') unlock(); });
-    }
-    tryAuto();
-    if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', bind); } else { bind(); }
+    function qp(n){var m=location.search.match(new RegExp('[?&]'+n+'=([^&]+)'));return m?decodeURIComponent(m[1]):null;}
+    function hide(){var g=document.getElementById('gate'); if(g) g.style.display='none';}
+    function tryAuto(){var h=(location.hash||'').replace('#','').trim(); var p=(qp('p')||qp('code')||'').trim(); if(h==='57'||p==='57') hide();}
+    function bind(){var g=document.getElementById('gate'),b=document.getElementById('gateBtn'),i=document.getElementById('gateCode'),e=document.getElementById('gateErr');function u(){var v=(i.value||'').trim(); if(v==='57'){hide();}else{if(e) e.style.display='block';}} if(b) b.addEventListener('click',u); if(i) i.addEventListener('keydown',function(ev){if(ev.key==='Enter')u();});}
+    tryAuto(); if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',bind);}else{bind();}
   })();
   </script>
 
@@ -143,8 +123,7 @@
       const manualCodeIn = document.getElementById('manualCode');
 
       function applyPreset(){
-        const pkey = presetSel.value;
-        const p = C.PRESETS[pkey];
+        const p = C.PRESETS[presetSel.value];
         dateIn.value = dateIn.value || new Date().toISOString().slice(0,10);
         titreIn.value = p.Titre;
         blocsIn.value = p.Blocs;
@@ -154,25 +133,12 @@
         notesIn.value = p.Notes;
         pisteIn.value = pisteIn.value || 200;
       }
-
       function isExactlyPreset(){
-        const pkey = presetSel.value;
-        const p = C.PRESETS[pkey];
-        return (
-          titreIn.value === p.Titre &&
-          Number(blocsIn.value) === p.Blocs &&
-          Number(dureeIn.value) === p.DureeBloc_min &&
-          Number(recupIn.value) === p.Recup_min &&
-          pctIn.value.replace(/\s+/g,'') === p.Cible_%VMA.join(',')
-        );
+        const p = C.PRESETS[presetSel.value];
+        return (titreIn.value===p.Titre && Number(blocsIn.value)===p.Blocs && Number(dureeIn.value)===p.DureeBloc_min && Number(recupIn.value)===p.Recup_min && pctIn.value.replace(/\s+/g,'')===p.Cible_%VMA.join(','));
       }
-
       function genCode(){
-        const seance = C.buildSession({
-          Titre: titreIn.value, DateStr: dateIn.value, Blocs: blocsIn.value,
-          DureeBloc_min: dureeIn.value, Recup_min: recupIn.value,
-          CiblePct: pctIn.value, Piste_m: pisteIn.value, Notes: notesIn.value
-        });
+        const seance = C.buildSession({ Titre:titreIn.value, DateStr:dateIn.value, Blocs:blocsIn.value, DureeBloc_min:dureeIn.value, Recup_min:recupIn.value, CiblePct:pctIn.value, Piste_m:pisteIn.value, Notes:notesIn.value });
         let codeOverride = (manualCodeIn.value||'').trim().toUpperCase();
         let code;
         if(codeOverride){
@@ -181,11 +147,12 @@
         }else if(isExactlyPreset()){
           code = C.codeForPreset ? C.codeForPreset(presetSel.value) : '000X';
         }else{
-          code = C.genExtendedCode();
+          code = Math.random().toString(36).slice(2,10).toUpperCase();
           C.saveCustomSession(code, seance);
         }
         codeSpan.textContent = code;
         sidSpan.textContent = seance.SeanceID;
+        var banner=document.getElementById('codeBanner'); if(banner){ banner.innerHTML='CODE&nbsp;ÉLÈVES&nbsp;: <span id="unlockCode">'+code+'</span>'; }
         localStorage.setItem('RC_last_seance', JSON.stringify({unlock:code, seance:seance}));
       }
 
@@ -193,7 +160,6 @@
       document.getElementById('btnGen').addEventListener('click', genCode);
       presetSel.addEventListener('change', function(){ applyPreset(); genCode(); });
 
-      // init
       applyPreset(); genCode();
     });
   })();
