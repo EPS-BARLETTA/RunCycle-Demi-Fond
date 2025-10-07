@@ -1,0 +1,124 @@
+<!DOCTYPE html><html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RunCycle — Prof</title>
+<style>
+:root{--bg:#0f172a;--ink:#e5e7eb;--muted:#94a3b8;--line:#243042;--panel:#0b1220;--accent:#2563eb}
+*{box-sizing:border-box}
+body{font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);margin:0}
+header,footer{border-block:1px solid var(--line);padding:18px;text-align:center}
+main{max-width:980px;margin:0 auto;padding:18px}
+.card{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
+.grid{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.btn{display:inline-block;padding:12px 16px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);margin-right:8px;cursor:pointer}
+input,select,textarea{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+.preset{border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--panel);cursor:pointer;margin:6px 0}
+.banner{position:sticky;top:8px;display:flex;gap:10px;justify-content:space-between;align-items:center;padding:10px;border:1px solid #374151;border-radius:12px;background:var(--panel);font-weight:700}
+.pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:4px 8px;color:var(--muted);font-size:14px}
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.96);display:grid;place-items:center;z-index:99}
+.overlay>div{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;max-width:360px;width:92%}
+.badge{font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:999px;background:#111827}
+</style>
+<body>
+<div id="gate" class="overlay">
+  <div>
+    <h3>🔒 Accès Prof</h3>
+    <p style="color:var(--muted)">Entrez le code (ou utilisez <code>?p=57</code> / <code>#57</code>).</p>
+    <div style="display:flex;gap:8px">
+      <input id="gateCode" type="password" inputmode="numeric" placeholder="Code" style="flex:1">
+      <button class="btn" onclick="(function(){var v=(document.getElementById('gateCode').value||'').trim(); if(v==='57'){document.getElementById('gate').style.display='none';} else {document.getElementById('err').style.display='block';}})()">Ouvrir</button>
+    </div>
+    <div id="err" style="display:none;color:#ef4444;margin-top:6px">Code incorrect</div>
+    <script>(function(){var u=location.search+location.hash;if(u.includes('p=57')||u.includes('#57')){var g=document.getElementById('gate');if(g)g.style.display='none';}})();</script>
+  </div>
+</div>
+
+<header><h1>RunCycle — Prof <span class="badge">Inline</span></h1><div style="color:var(--muted)">Séances type / personnalisées • Code oral</div></header>
+<main>
+  <div class="banner">CODE ÉLÈVES : <span id="code">—</span> <button class="btn" onclick="navigator.clipboard&&navigator.clipboard.writeText(document.getElementById('code').textContent)">Copier</button></div>
+
+  <div class="card">
+    <b>⭐ Séances type</b>
+    <div class="preset" onclick="tile('S1')">S1 — Test 6’ (VMA)</div>
+    <div class="preset" onclick="tile('S2')">S2 — 2×6’ @90% (r=3’)</div>
+    <div class="preset" onclick="tile('S3')">S3 — 3×4’ 80/90/100% (r=2’)</div>
+    <div class="preset" onclick="tile('S4')">S4 — 4×3’ 90→95% (r=2’)</div>
+    <div class="preset" onclick="tile('S5')">S5 — Éval 4×3’ @95% (r=2’)</div>
+    <div style="color:var(--muted);font-size:14px;margin-top:6px">Cliquer une tuile remplit le formulaire ci-dessous.</div>
+  </div>
+
+  <div class="card">
+    <b>🗓️ Créer / choisir la séance</b>
+    <div class="grid">
+      <div><label>Sélection</label><select id="preset"><option value="S1">S1</option><option value="S2" selected>S2</option><option value="S3">S3</option><option value="S4">S4</option><option value="S5">S5</option></select></div>
+      <div><label>Date</label><input id="sDate" type="date"></div>
+      <div><label>Titre</label><input id="sTitre" placeholder="4×3’ r=2’ @95% VMA"></div>
+      <div><label>Piste (m)</label><input id="sPiste" type="number" min="50" value="200"></div>
+      <div><label>Blocs</label><input id="sBlocs" type="number" min="1" value="4"></div>
+      <div><label>Durée bloc (min)</label><input id="sDuree" type="number" min="1" value="3"></div>
+      <div><label>Récup (min)</label><input id="sRecup" type="number" min="0" value="2"></div>
+      <div><label>% VMA (liste)</label><input id="sPct" value="0.95"></div>
+      <div style="grid-column:1/-1"><label>Consignes</label><textarea id="sNotes" rows="2" placeholder="Régularité, départ prudent, finish propre"></textarea></div>
+    </div>
+    <div style="margin-top:8px">
+      <button class="btn" onclick="applyPreset(); gen()">↺ Charger séance type</button>
+      <button class="btn" style="background:#2563eb" onclick="gen()">🔐 Générer / actualiser le code</button>
+    </div>
+    <div style="margin-top:8px" class="pill">SeanceID: <span id="sid">—</span></div>
+    <div style="margin-top:8px"><label>Remplacer le code élèves (optionnel)</label><input id="manual" placeholder="ex: 202B"></div>
+  </div>
+
+  <div class="card" style="text-align:center"><a class="btn" href="./eleve.html">▶️ Tester côté Élève</a></div>
+</main>
+<footer>RunCycle — Équipe EPS Lycée Vauban — Luxembourg — JB</footer>
+
+<script>
+const PRESETS={
+ S1:{Titre:"Test 6' (estimation VMA)",Blocs:1,DureeBloc_min:6,Recup_min:0,Cible_%VMA:[]},
+ S2:{Titre:"2×6' @ 90% VMA (r=3')",Blocs:2,DureeBloc_min:6,Recup_min:3,Cible_%VMA:[0.90,0.90]},
+ S3:{Titre:"3×4' 80/90/100% (r=2')",Blocs:3,DureeBloc_min:4,Recup_min:2,Cible_%VMA:[0.80,0.90,1.00]},
+ S4:{Titre:"4×3' 90→95% (r=2')",Blocs:4,DureeBloc_min:3,Recup_min:2,Cible_%VMA:[0.90,0.92,0.94,0.95]},
+ S5:{Titre:"Éval 4×3' @95% (r=2')",Blocs:4,DureeBloc_min:3,Recup_min:2,Cible_%VMA:[0.95,0.95,0.95,0.95]}
+};
+const FIX = {S1:"101A",S2:"202B",S3:"303C",S4:"404D",S5:"505E"};
+function today(){return new Date().toISOString().slice(0,10)}
+function applyPreset(){
+  const p=PRESETS[document.getElementById('preset').value], D=document;
+  D.getElementById('sDate').value=D.getElementById('sDate').value||today();
+  D.getElementById('sTitre').value=p.Titre;
+  D.getElementById('sBlocs').value=p.Blocs;
+  D.getElementById('sDuree').value=p.DureeBloc_min;
+  D.getElementById('sRecup').value=p.Recup_min;
+  D.getElementById('sPct').value=p.Cible_%VMA.join(',');
+}
+function sameAsPreset(){
+  const D=document, p=PRESETS[D.getElementById('preset').value];
+  return D.getElementById('sTitre').value===p.Titre &&
+         +D.getElementById('sBlocs').value===p.Blocs &&
+         +D.getElementById('sDuree').value===p.DureeBloc_min &&
+         +D.getElementById('sRecup').value===p.Recup_min &&
+         (D.getElementById('sPct').value||'').replace(/\s+/g,'')===p.Cible_%VMA.join(',');
+}
+function build(){
+  const D=document; return {
+    Date:D.getElementById('sDate').value||today(),
+    Titre:D.getElementById('sTitre').value||'Séance',
+    Blocs:+D.getElementById('sBlocs').value||4,
+    DureeBloc_min:+D.getElementById('sDuree').value||3,
+    Recup_min:+D.getElementById('sRecup').value||2,
+    Cible_%VMA:(D.getElementById('sPct').value||'0.95').split(',').map(x=>+x.trim()).filter(x=>!isNaN(x)),
+    Piste_m:+D.getElementById('sPiste').value||200,
+    Consignes:D.getElementById('sNotes').value||""
+  };
+}
+function gen(){
+  const s=build(); let code;
+  const manual=(document.getElementById('manual').value||'').trim().toUpperCase();
+  if(manual){ code=manual; }
+  else if(sameAsPreset()){ code = FIX[document.getElementById('preset').value] || '000X'; }
+  else { code = Math.random().toString(36).slice(2,10).toUpperCase(); localStorage.setItem('RC_custom_'+code, JSON.stringify(s)); }
+  document.getElementById('code').textContent=code;
+  document.getElementById('sid').textContent = s.Date + '_' + Math.random().toString(36).slice(2,6).toUpperCase();
+}
+function tile(k){ document.getElementById('preset').value=k; applyPreset(); gen(); }
+applyPreset(); gen();
+</script>
+</body></html>
