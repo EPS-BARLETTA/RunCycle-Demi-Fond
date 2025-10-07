@@ -142,11 +142,11 @@
       <div class="grid cols-2" style="margin-top:12px">
         <div>
           <label>Remplacer le code élèves (optionnel)</label>
-          <input id="manualCode" placeholder="ex: 202B ou AB12CD34">
+          <input id="manualCode" placeholder="ex: 202B">
           <div class="sub">Si rempli, c’est ce code qui sera affiché et stocké pour cette séance.</div>
         </div>
       </div>
-      <p class="sub" style="margin-top:6px">👉 Étapes : 1) Cliquer une tuile OU choisir la séance  2) “↺ Charger séance type”  3) “🔐 Générer / actualiser le code”  4) Dicter le code aux élèves.</p>
+      <p class="sub" style="margin-top:6px">👉 Étapes : 1) Tuile OU menu  2) “↺ Charger séance type”  3) “🔐 Générer / actualiser le code”  4) Dicter le code.</p>
       <div class="row" style="margin-top:8px"><a class="btn" href="./index.html">⬅️ Retour</a></div>
     </section>
   </main>
@@ -156,9 +156,8 @@
   <div id="toast" class="toast">Copié ✔</div>
 
   <script>
-  // ===== Mini-coeur (aucune dépendance externe) =====
   const PRESETS = {
-    S1: { Titre:"Test 6' (estimation VMA)", Blocs:1, DureeBloc_min:6, Recup_min:0, Cible_%VMA:[/* libre */], Notes:"Courir la plus grande distance en 6'." },
+    S1: { Titre:"Test 6' (estimation VMA)", Blocs:1, DureeBloc_min:6, Recup_min:0, Cible_%VMA:[], Notes:"Courir la plus grande distance en 6'." },
     S2: { Titre:"2×6' @ 90% VMA (r=3')", Blocs:2, DureeBloc_min:6, Recup_min:3, Cible_%VMA:[0.90,0.90], Notes:"Régularité, allure 90% VMA." },
     S3: { Titre:"3×4' aux allures 80/90/100% (r=2')", Blocs:3, DureeBloc_min:4, Recup_min:2, Cible_%VMA:[0.80,0.90,1.00], Notes:"Différencier les allures." },
     S4: { Titre:"4×3' projet @ 90–95% (r=2')", Blocs:4, DureeBloc_min:3, Recup_min:2, Cible_%VMA:[0.90,0.92,0.94,0.95], Notes:"Tenir le projet, finish propre." },
@@ -166,7 +165,7 @@
   };
   const PRESET_CODES = { S1:"101A", S2:"202B", S3:"303C", S4:"404D", S5:"505E" };
 
-  // Gate 57 + URL unlock (?p=57 / #57)
+  // Gate 57 (also ?p=57 / #57)
   (function(){
     function qp(n){ const m=location.search.match(new RegExp('[?&]'+n+'=([^&]+)')); return m?decodeURIComponent(m[1]):null; }
     function hideGate(){ const g=document.getElementById('gate'); if(g) g.style.display='none'; }
@@ -175,7 +174,6 @@
     auto(); if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',bind);}else{bind();}
   })();
 
-  // UI refs
   const codeSpan = document.getElementById('unlockCode');
   const sidSpan  = document.getElementById('sid');
   const presetSel= document.getElementById('preset');
@@ -190,7 +188,6 @@
   const manualCodeIn = document.getElementById('manualCode');
   const toast = document.getElementById('toast');
 
-  // Helpers
   function today(){ return new Date().toISOString().slice(0,10); }
   function buildSession(){
     return {
@@ -213,8 +210,30 @@
       Number(blocsIn.value) === p.Blocs &&
       Number(dureeIn.value) === p.DureeBloc_min &&
       Number(recupIn.value) === p.Recup_min &&
-      pctIn.value.replace(/\s+/g,'') === p.Cible_%VMA.join(',')
+      String(p.Cible_%VMA.join(',')) === String(String(pctIn.value||'').replace(/\s+/g,''))
     );
+  }
+  function saveCustom(code, seance){
+    const map = JSON.parse(localStorage.getItem('RC_custom_sessions')||'{}');
+    map[code] = seance;
+    localStorage.setItem('RC_custom_sessions', JSON.stringify(map));
+  }
+  function genCode(){
+    const seance = buildSession();
+    let code;
+    const ov = (manualCodeIn.value||'').trim().toUpperCase();
+    if(ov){
+      code = ov;
+      if(!Object.values(PRESET_CODES).includes(code)) saveCustom(code, seance);
+    } else if(isExactlyPreset()){
+      code = PRESET_CODES[presetSel.value] || '000X';
+    } else {
+      code = Math.random().toString(36).slice(2,10).toUpperCase();
+      saveCustom(code, seance);
+    }
+    codeSpan.textContent = code;
+    sidSpan.textContent = seance.SeanceID;
+    localStorage.setItem('RC_last_seance', JSON.stringify({unlock:code, seance:seance}));
   }
   function applyPreset(key){
     const p = PRESETS[key||presetSel.value];
@@ -227,50 +246,18 @@
     notesIn.value = p.Notes;
     pisteIn.value = pisteIn.value || 200;
   }
-  function saveCustom(code, seance){
-    const map = JSON.parse(localStorage.getItem('RC_custom_sessions')||'{}');
-    map[code] = seance;
-    localStorage.setItem('RC_custom_sessions', JSON.stringify(map));
-  }
-  function genCode(){
-    const seance = buildSession();
-    let code;
-    const override = (manualCodeIn.value||'').trim().toUpperCase();
-    if(override){
-      code = override;
-      // si ce n'est pas un code type, on stocke la séance pour usage local
-      if(!Object.values(PRESET_CODES).includes(code)) saveCustom(code, seance);
-    } else if(isExactlyPreset()){
-      code = PRESET_CODES[presetSel.value] || '000X';
-    } else {
-      code = Math.random().toString(36).slice(2,10).toUpperCase();
-      saveCustom(code, seance);
-    }
-    codeSpan.textContent = code;
-    sidSpan.textContent = seance.SeanceID;
-    localStorage.setItem('RC_last_seance', JSON.stringify({unlock:code, seance:seance}));
-  }
   function copyCode(){
     const c = codeSpan.textContent.trim();
     if(!c || c==='—') return;
     navigator.clipboard?.writeText(c).then(()=>{ toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'),1200); });
   }
 
-  // Bind UI
+  document.querySelectorAll('.preset').forEach(t=>t.addEventListener('click',()=>{ const key=t.getAttribute('data-p'); presetSel.value=key; applyPreset(key); genCode(); }));
   document.getElementById('btnPreset').addEventListener('click', ()=>{ applyPreset(); genCode(); });
   document.getElementById('btnGen').addEventListener('click', genCode);
   document.getElementById('btnCopy').addEventListener('click', copyCode);
-  document.querySelectorAll('.preset').forEach(tile=>{
-    tile.addEventListener('click', ()=>{
-      const key = tile.getAttribute('data-p');
-      presetSel.value = key;
-      applyPreset(key);
-      genCode();
-    });
-  });
   presetSel.addEventListener('change', ()=>{ applyPreset(); genCode(); });
 
-  // Init
   applyPreset('S2'); genCode();
   </script>
 </body>
