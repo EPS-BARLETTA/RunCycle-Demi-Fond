@@ -1,55 +1,82 @@
 <!DOCTYPE html><html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>RunCycle — Prof</title>
+<title>RunCycle — Prof (fix code banner)</title>
 <style>
-:root{--bg:#0b1020;--ink:#e6e9ef;--muted:#9aa4b2;--line:#222b3c;--panel:#0f172a;--primary:#3b82f6;--accent:#8b5cf6}
+:root{--bg:#0b1020;--ink:#e6e9ef;--muted:#9aa4b2;--line:#222b3c;--panel:#0f172a;--primary:#3b82f6}
 *{box-sizing:border-box}html,body{margin:0}
 body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:radial-gradient(1200px 800px at 50% -10%,#13203e,#0b1020);color:var(--ink)}
 header,footer{border-block:1px solid var(--line);padding:22px;text-align:center}
 main{max-width:980px;margin:0 auto;padding:20px}
-.card{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));border:1px solid var(--line);border-radius:18px;padding:18px;margin:12px 0;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));border:1px solid var(--line);border-radius:18px;padding:18px;margin:12px 0}
 .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
 .btn{display:inline-flex;align-items:center;gap:10px;padding:12px 16px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;text-decoration:none;font-weight:600}
 .btn.primary{background:var(--primary);color:white}
 input,select,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:18px}
-.preset{border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--panel);cursor:pointer;margin:6px 0;display:grid;gap:6px}
+.preset{border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--panel);cursor:pointer;margin:6px 0}
 .banner{position:sticky;top:10px;display:flex;gap:12px;justify-content:space-between;align-items:center;padding:12px;border:1px solid #2c3951;border-radius:14px;background:var(--panel);font-weight:800}
 .code{font:800 28px/1 ui-monospace,Menlo,Consolas,monospace}
 .pill{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:6px 10px;color:var(--muted);font-size:14px}
 .overlay{position:fixed;inset:0;background:rgba(3,6,14,.96);display:grid;place-items:center;z-index:99}
 .overlay>div{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;max-width:360px;width:92%}
-.badge{font-size:12px;padding:4px 8px;border:1px solid var(--line);border-radius:999px;background:#111827}
-h2{margin:6px 0 10px}
+.warn{display:none;margin-top:8px;padding:10px;border:1px solid #9f1239;background:#2b0b14;color:#fecdd3;border-radius:12px}
 </style>
 <body>
-<div id="gate" class="overlay">
+<div id="gate" class="overlay" aria-hidden="true">
   <div>
     <h3>🔒 Accès Prof</h3>
     <p style="color:var(--muted)">Entrer le code (ou ajoutez <code>?p=57</code> / <code>#57</code> à l’URL).</p>
     <div style="display:flex;gap:8px">
       <input id="gateCode" type="password" inputmode="numeric" placeholder="Code" style="flex:1">
-      <button class="btn primary" onclick="(function(){var v=(document.getElementById('gateCode').value||'').trim(); if(v==='57'){document.getElementById('gate').style.display='none';} else {document.getElementById('err').style.display='block';}})()">Ouvrir</button>
+      <button class="btn primary" id="btnGate">Ouvrir</button>
     </div>
     <div id="err" style="display:none;color:#ef4444;margin-top:6px">Code incorrect</div>
-    <script>(function(){var u=location.search+location.hash;if(u.includes('p=57')||u.includes('#57')){var g=document.getElementById('gate');if(g)g.style.display='none';}})();</script>
+    <script>
+      (function(){
+        function openGate(){
+          var v=(document.getElementById('gateCode').value||'').trim();
+          if(v==='57'){
+            document.getElementById('gate').style.display='none';
+            // Génération immédiate à l'ouverture
+            setTimeout(function(){
+              try{ applyPreset(); gen(); }catch(e){}
+            }, 0);
+          } else {
+            document.getElementById('err').style.display='block';
+          }
+        }
+        document.getElementById('btnGate').addEventListener('click', openGate);
+        document.getElementById('gateCode').addEventListener('keydown', function(ev){ if(ev.key==='Enter'){ openGate(); }});
+        var u=location.search+location.hash;
+        if(u.includes('p=57')||u.includes('#57')){
+          document.getElementById('gate').style.display='none';
+          setTimeout(function(){
+            try{ applyPreset(); gen(); }catch(e){}
+          }, 0);
+        }
+      })();
+    </script>
   </div>
 </div>
 
-<header><h1>RunCycle — Prof <span class="badge">v2</span></h1><div style="color:var(--muted)">Séances type / personnalisées • Code oral</div></header>
+<header><h1>RunCycle — Prof</h1><div style="color:var(--muted)">Séances type / personnalisées • Code oral</div></header>
 <main>
   <div class="banner">
     <div>CODE ÉLÈVES : <span id="code" class="code">—</span></div>
     <div class="pill"><span id="sid">—</span></div>
-    <button class="btn" onclick="navigator.clipboard&&navigator.clipboard.writeText(document.getElementById('code').textContent)">Copier</button>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn" id="btnCopy">Copier</button>
+      <button class="btn" id="btnForce">Forcer génération</button>
+    </div>
   </div>
+  <div id="warn" class="warn"></div>
 
   <div class="card">
     <h2>⭐ Séances type</h2>
     <div class="grid">
-      <div class="preset" onclick="tile('S1')"><b>S1 • Test 6’ (VMA)</b><span style='color:var(--muted)'>1×6’ — estimation</span></div>
-      <div class="preset" onclick="tile('S2')"><b>S2 • 2×6’ @90%</b><span style='color:var(--muted)'>r=3’ — régularité</span></div>
-      <div class="preset" onclick="tile('S3')"><b>S3 • 3×4’ 80/90/100%</b><span style='color:var(--muted)'>r=2’ — différencier</span></div>
-      <div class="preset" onclick="tile('S4')"><b>S4 • 4×3’ 90→95%</b><span style='color:var(--muted)'>r=2’ — projet</span></div>
-      <div class="preset" onclick="tile('S5')"><b>S5 • Éval 4×3’ @95%</b><span style='color:var(--muted)'>r=2’ — ±0,5 km/h</span></div>
+      <div class="preset" data-k="S1"><b>S1 • Test 6’ (VMA)</b><div style='color:var(--muted)'>1×6’ — estimation</div></div>
+      <div class="preset" data-k="S2"><b>S2 • 2×6’ @90%</b><div style='color:var(--muted)'>r=3’ — régularité</div></div>
+      <div class="preset" data-k="S3"><b>S3 • 3×4’ 80/90/100%</b><div style='color:var(--muted)'>r=2’ — différencier</div></div>
+      <div class="preset" data-k="S4"><b>S4 • 4×3’ 90→95%</b><div style='color:var(--muted)'>r=2’ — projet</div></div>
+      <div class="preset" data-k="S5"><b>S5 • Éval 4×3’ @95%</b><div style='color:var(--muted)'>r=2’ — ±0,5 km/h</div></div>
     </div>
   </div>
 
@@ -67,8 +94,8 @@ h2{margin:6px 0 10px}
       <div style="grid-column:1/-1"><label>Consignes</label><textarea id="sNotes" rows="2" placeholder="Régularité, départ prudent, finish propre"></textarea></div>
     </div>
     <div style="margin-top:8px">
-      <button class="btn" onclick="applyPreset(); gen()">↺ Charger séance type</button>
-      <button class="btn primary" onclick="gen()">🔐 Générer / actualiser le code</button>
+      <button class="btn" id="btnLoad">↺ Charger séance type</button>
+      <button class="btn primary" id="btnGen">🔐 Générer / actualiser le code</button>
     </div>
     <div style="margin-top:8px"><label>Remplacer le code élèves (optionnel)</label><input id="manual" placeholder="ex: 202B"></div>
   </div>
@@ -86,6 +113,10 @@ const PRESETS={
  S5:{Titre:"Éval 4×3' @95% (r=2')",Blocs:4,DureeBloc_min:3,Recup_min:2,Cible_%VMA:[0.95,0.95,0.95,0.95]}
 };
 const FIX = {S1:"101A",S2:"202B",S3:"303C",S4:"404D",S5:"505E"};
+
+function warn(msg){ const w=document.getElementById('warn'); w.textContent=msg; w.style.display='block'; }
+function clearWarn(){ const w=document.getElementById('warn'); w.style.display='none';}
+
 function today(){return new Date().toISOString().slice(0,10)}
 function applyPreset(){
   const p=PRESETS[document.getElementById('preset').value], D=document;
@@ -96,6 +127,7 @@ function applyPreset(){
   D.getElementById('sRecup').value=p.Recup_min;
   D.getElementById('sPct').value=p.Cible_%VMA.join(',');
 }
+
 function sameAsPreset(){
   const D=document, p=PRESETS[D.getElementById('preset').value];
   return D.getElementById('sTitre').value===p.Titre &&
@@ -104,6 +136,7 @@ function sameAsPreset(){
          +D.getElementById('sRecup').value===p.Recup_min &&
          (D.getElementById('sPct').value||'').replace(/\s+/g,'')===p.Cible_%VMA.join(',');
 }
+
 function build(){
   const D=document; return {
     Date:D.getElementById('sDate').value||today(),
@@ -116,16 +149,40 @@ function build(){
     Consignes:D.getElementById('sNotes').value||""
   };
 }
+
 function gen(){
-  const s=build(); let code;
-  const manual=(document.getElementById('manual').value||'').trim().toUpperCase();
-  if(manual){ code=manual; }
-  else if(sameAsPreset()){ code = FIX[document.getElementById('preset').value] || '000X'; }
-  else { code = Math.random().toString(36).slice(2,10).toUpperCase(); localStorage.setItem('RC_custom_'+code, JSON.stringify(s)); }
-  document.getElementById('code').textContent=code;
-  document.getElementById('sid').textContent = s.Date + '_' + Math.random().toString(36).slice(2,6).toUpperCase();
+  clearWarn();
+  try{
+    const s=build(); let code;
+    const manual=(document.getElementById('manual').value||'').trim().toUpperCase();
+    if(manual){ code=manual; }
+    else if(sameAsPreset()){ code = FIX[document.getElementById('preset').value] || '000X'; }
+    else { code = Math.random().toString(36).slice(2,10).toUpperCase(); localStorage.setItem('RC_custom_'+code, JSON.stringify(s)); }
+    document.getElementById('code').textContent=code||'—';
+    document.getElementById('sid').textContent = s.Date + '_' + Math.random().toString(36).slice(2,6).toUpperCase();
+    if(!code) warn("Le code n'a pas été généré.");
+  }catch(e){
+    warn("Erreur generation code: "+(e&&e.message?e.message:e));
+  }
 }
+
 function tile(k){ document.getElementById('preset').value=k; applyPreset(); gen(); }
-applyPreset(); gen();
+
+document.addEventListener('DOMContentLoaded', function(){
+  // Boutons
+  document.getElementById('btnLoad').addEventListener('click', function(){ applyPreset(); gen(); });
+  document.getElementById('btnGen').addEventListener('click', gen);
+  document.getElementById('btnCopy').addEventListener('click', function(){
+    const c=document.getElementById('code').textContent||''; if(navigator.clipboard){ navigator.clipboard.writeText(c); }
+  });
+  document.getElementById('btnForce').addEventListener('click', gen);
+  // Click sur chaque tuile
+  document.querySelectorAll('.preset').forEach(x=>x.addEventListener('click', function(){ tile(this.dataset.k); }));
+  // Pré-génération si gate déjà ouvert via URL
+  var u=location.search+location.hash;
+  if(u.includes('p=57')||u.includes('#57')){
+    setTimeout(function(){ try{ applyPreset(); gen(); }catch(e){} }, 0);
+  }
+});
 </script>
 </body></html>
