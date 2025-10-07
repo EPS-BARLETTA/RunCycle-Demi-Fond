@@ -42,7 +42,7 @@
 
     function renderSeance(){
       const s = currentSeance; if(!s) return;
-      seanceBox.innerHTML = '<div class="row"><span class="pill">'+s.Titre+'</span><span class="pill">Blocs: '+s.Blocs+' • '+s.DureeBloc_min+"' r="+s.Recup_min+"'</span><span class="pill">Piste: "+(s.Piste_m||pisteSel.value)+' m</span></div><div class="sub" style="margin-top:6px">Consignes : '+(s.Consignes||'')+'</div>';
+      seanceBox.innerHTML = '<div class="row"><span class="pill">'+s.Titre+'</span><span class="pill">Blocs: '+s.Blocs+' • '+s.DureeBloc_min+"' r="+s.Recup_min+"'</span><span class="pill">Piste: '+(Number(document.getElementById('ePiste').value||s.Piste_m||400))+' m</span></div><div class="sub" style="margin-top:6px">Consignes : '+(s.Consignes||'')+'</div>';
       seanceBox.classList.remove('hidden');
       buildBlocTable();
     }
@@ -95,18 +95,18 @@
       const ecB = +(vB - cibleB).toFixed(2);
       resultBox.innerHTML = '';
       if(mode==='duo'){
-        const payload = { v:1, format:'duo', SeanceID:s.SeanceID, Seance:s.Titre, Piste_m:s.Piste_m||Number(pisteSel.value||400),
+        const payload = { v:1, format:'duo', SeanceID:s.SeanceID, Seance:s.Titre, Piste_m:Number(pisteSel.value||s.Piste_m||400),
           eleves:[
             { Nom:A.Nom, Prénom:A.Prénom, Classe:A.Classe, Sexe:A.Sexe, VMA:A.VMA, Blocs_m:am, RPE:ar, Vitesse_moy_km_h:+vA.toFixed(2), Ecart_km_h:ecA },
             { Nom:B.Nom, Prénom:B.Prénom, Classe:B.Classe, Sexe:B.Sexe, VMA:B.VMA, Blocs_m:bm, RPE:br, Vitesse_moy_km_h:+vB.toFixed(2), Ecart_km_h:ecB }
           ]};
         new QRCode(resultBox,{text:JSON.stringify(payload), width:220, height:220});
       }else if(mode==='soloA'){
-        const payload = { v:1, format:'solo', SeanceID:s.SeanceID, Seance:s.Titre, Piste_m:s.Piste_m||Number(pisteSel.value||400),
+        const payload = { v:1, format:'solo', SeanceID:s.SeanceID, Seance:s.Titre, Piste_m:Number(pisteSel.value||s.Piste_m||400),
           Nom:A.Nom, Prénom:A.Prénom, Classe:A.Classe, Sexe:A.Sexe, VMA:A.VMA, Blocs_m:am, RPE:ar, Vitesse_moy_km_h:+vA.toFixed(2), Ecart_km_h:ecA };
         new QRCode(resultBox,{text:JSON.stringify(payload), width:220, height:220});
       }else if(mode==='soloB'){
-        const payload = { v:1, format:'solo', SeanceID:s.SeanceID, Seance:s.Titre, Piste_m:s.Piste_m||Number(pisteSel.value||400),
+        const payload = { v:1, format:'solo', SeanceID:s.SeanceID, Seance:s.Titre, Piste_m:Number(pisteSel.value||s.Piste_m||400),
           Nom:B.Nom, Prénom:B.Prénom, Classe:B.Classe, Sexe:B.Sexe, VMA:B.VMA, Blocs_m:bm, RPE:br, Vitesse_moy_km_h:+vB.toFixed(2), Ecart_km_h:ecB };
         new QRCode(resultBox,{text:JSON.stringify(payload), width:220, height:220});
       }
@@ -172,7 +172,7 @@
         </div>
         <div>
           <label>Longueur de piste (m)</label>
-          <select id="ePiste"><option>200</option><option>250</option><option>300</option><option>333</option><option selected>400</option></select>
+          <input id="ePiste" type="number" min="50" step="1" value="200" placeholder="ex: 180, 240, 325">
         </div>
       </div>
       <div class="row" style="margin-top:10px">

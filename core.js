@@ -98,7 +98,7 @@ window.RunCycleCore = {
   go, genShortCode, genExtendedCode, PRESETS, buildSession,
   saveCustomSession, resolveByCode,
   mPerMin, kmhFromMeters, mean
-, codeForPreset, presetForCode, PRESET_CODES};
+, codeForPreset, presetForCode, PRESET_CODES, codeForPreset, presetForCode, PRESET_CODES};
 
 // --- Deterministic short codes for presets (3 digits + 1 letter) ---
 const PRESET_CODES = {

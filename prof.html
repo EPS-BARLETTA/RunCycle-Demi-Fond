@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -9,237 +8,195 @@
   <script src="./qr-loader.js" defer></script>
   <script src="./qr.min.js" defer></script>
   <script src="./core.js" defer></script>
-  <script defer>
-  document.addEventListener('DOMContentLoaded', ()=>{
-    const C = window.RunCycleCore;
-    // Elements
-    const presetSel = document.getElementById('preset');
-    const dateIn = document.getElementById('sDate');
-    const titreIn = document.getElementById('sTitre');
-    const pisteSel = document.getElementById('sPiste');
-    const blocsIn = document.getElementById('sBlocs');
-    const dureeIn = document.getElementById('sDuree');
-    const recupIn = document.getElementById('sRecup');
-    const pctIn = document.getElementById('sPct');
-    const notesIn = document.getElementById('sNotes');
-    const codeSpan = document.getElementById('unlockCode');
-    const sidSpan = document.getElementById('sid');
-    const qrBox = document.getElementById('qrSeance');
-    const codeTypeSpan = document.getElementById('codeType');
-
-    function applyPreset(){
-      const pkey = presetSel.value;
-      const p = C.PRESETS[pkey];
-      dateIn.value = dateIn.value || new Date().toISOString().slice(0,10);
-      titreIn.value = p.Titre;
-      blocsIn.value = p.Blocs;
-      dureeIn.value = p.DureeBloc_min;
-      recupIn.value = p.Recup_min;
-      pctIn.value = p.Cible_%VMA.join(',');
-      notesIn.value = p.Notes;
-    }
-
-    function genCode(){
-      const isPreset = !!C.PRESETS[presetSel.value] &&
-        titreIn.value === C.PRESETS[presetSel.value].Titre &&
-        Number(blocsIn.value) === C.PRESETS[presetSel.value].Blocs &&
-        Number(dureeIn.value) === C.PRESETS[presetSel.value].DureeBloc_min &&
-        Number(recupIn.value) === C.PRESETS[presetSel.value].Recup_min &&
-        pctIn.value.replace(/\s+/g,'') === C.PRESETS[presetSel.value].Cible_%VMA.join(',');
-
-      let code;
-      let seance = C.buildSession({
-        Titre: titreIn.value, DateStr: dateIn.value, Blocs: blocsIn.value,
-        DureeBloc_min: dureeIn.value, Recup_min: recupIn.value,
-        CiblePct: pctIn.value, Piste_m: pisteSel.value, Notes: notesIn.value
-      });
-
-      if(isPreset){
-        // Short code for presets
-        const idx = Object.keys(C.PRESETS).indexOf(presetSel.value);
-        code = C.genShortCode(idx);
-        // Students will reconstruct from code locally (no details transferred)
-        codeTypeSpan.textContent = 'code court (présélection)';
-      } else {
-        // Extended code for custom
-        code = C.genExtendedCode();
-        C.saveCustomSession(code, seance);
-        codeTypeSpan.textContent = 'code étendu (séance perso)';
-      }
-
-      codeSpan.textContent = code;
-      sidSpan.textContent = seance.SeanceID;
-
-      // Optional: QR séance with JSON (if tu veux quand même projeter)
-      /* QR séance désactivé */// Keep last on this device (utile si tablette prof == tablette élèves)
-      localStorage.setItem('RC_last_seance', JSON.stringify({unlock:code, seance:seance}));
-    }
-
-    document.getElementById('btnPreset').addEventListener('click', applyPreset);
-    document.getElementById('btnGen').addEventListener('click', genCode);
-    // init
-    applyPreset();
-
-    // === Robust Gate '57' (no hints, no deps) ===
-    (function(){
-      var gate = document.getElementById('gate');
-      var btn = document.getElementById('gateBtn');
-      var inp = document.getElementById('gateCode');
-      var err = document.getElementById('gateErr');
-      function unlock(){
-        var v = (inp.value||'').trim();
-        if(v === '57'){ gate.style.display='none'; try{ document.getElementById('preset').focus(); }catch(e){} }
-        else { err.style.display='block'; }
-      }
-      if(btn){ btn.addEventListener('click', unlock); }
-      if(inp){ inp.addEventListener('keydown', function(e){ if(e.key==='Enter'){ unlock(); }}); }
-    })();
-    
-    // --- Gate access '57'
-    const gate = document.getElementById('gate');
-    const gateBtn = document.getElementById('gateBtn');
-    const gateCode = document.getElementById('gateCode');
-    const gateErr = document.getElementById('gateErr');
-    function openGate(){
-      if((gateCode.value||'').trim() === '57'){
-        gate.style.display='none';
-        // small focus
-        presetSel.focus();
-      }else{
-        gateErr.style.display='block';
-      }
-    }
-    gateBtn.addEventListener('click', openGate);
-    gateCode.addEventListener('keydown', (e)=>{ if(e.key==='Enter') openGate(); });
-    // --- Auto generate on preset change for quick flow
-    presetSel.addEventListener('change', ()=>{ applyPreset(); genCode(); });
-
-  });
-  </script>
+  <style>
+    .gate{position:fixed;inset:0;background:rgba(15,23,42,.96);display:grid;place-items:center;z-index:9999}
+    .gate-card{background:#0b1220;border:1px solid #253247;border-radius:16px;padding:20px;max-width:360px;width:92%}
+  </style>
 </head>
 <body>
-  
-<style>
-  .gate{position:fixed;inset:0;background:rgba(15,23,42,.96);display:grid;place-items:center;z-index:9999}
-  .gate-card{background:#0b1220;border:1px solid #253247;border-radius:16px;padding:20px;max-width:360px;width:92%}
-  .gate h2{margin-top:0}
-</style>
-
   <div id="gate" class="gate">
     <div class="gate-card">
       <h2>🔒 Accès Prof</h2>
       <p class="sub">Entrez le code pour ouvrir le mode Prof.</p>
-      <div class="row"><input id="gateCode" type="password" placeholder="Code" inputmode="numeric" style="flex:1"><button class="btn primary" id="gateBtn">Ouvrir</button></div>
+      <div class="row"><input id="gateCode" type="password" inputmode="numeric" placeholder="Code" style="flex:1"><button class="btn primary" id="gateBtn">Ouvrir</button></div>
       <div id="gateErr" class="sub" style="color:#ef4444;margin-top:8px;display:none">Code incorrect</div>
-      <div class="sub" style="margin-top:8px">Astuce : vous pouvez revenir à l’accueil si besoin.</div>
       <div class="row" style="margin-top:10px"><a class="btn" href="./index.html">⬅️ Accueil</a></div>
     </div>
   </div>
 
-<script>
-(function(){
-  function getParam(name){
-    var m=location.search.match(new RegExp('[?&]'+name+'=([^&]+)')); return m? decodeURIComponent(m[1]) : null;
-  }
-  function autoUnlockIfNeeded(){
-    var hash = (location.hash||'').replace('#','').trim();
-    var qp = (getParam('p')||getParam('code')||'').trim();
-    if(hash==='57' || qp==='57'){
-      var gate = document.getElementById('gate');
-      if(gate){ gate.style.display='none'; }
-    }
-  }
-  function bindGate(){
-    var gate=document.getElementById('gate'), btn=document.getElementById('gateBtn'), inp=document.getElementById('gateCode'), err=document.getElementById('gateErr');
-    if(!gate||!btn||!inp) return;
-    function unlock(){
-      var v=(inp.value||'').trim();
-      if(v==='57'){ gate.style.display='none'; try{ document.getElementById('preset').focus(); }catch(e){} }
-      else { if(err) err.style.display='block'; }
-    }
-    btn.addEventListener('click', unlock);
-    inp.addEventListener('keydown', function(e){ if(e.key==='Enter'){ unlock(); }});
-  }
-  // Run now and also on DOM ready
-  autoUnlockIfNeeded();
-  if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded', function(){ autoUnlockIfNeeded(); bindGate(); });
-  }else{
-    bindGate();
-  }
-})();
-</script>
-
-
   <header>
     <h1>RunCycle — Mode Prof</h1>
-    <div class="sub">Séances type <em>ou</em> personnalisées • Code simple (sans scan côté élèves)</div>
+    <div class="sub">Séances type ou personnalisées • Donnez un <b>code oral</b> aux élèves</div>
   </header>
-  <main>
-    <section class="grid cols-2">
-      <div class="card">
-        <h2>🗓️ Séance</h2>
-        <div class="grid cols-2">
-          <div>
-            <label>Séance type</label>
-            <select id="preset">
-              <option value="S1">S1 — Test 6’ (VMA)</option>
-              <option value="S2">S2 — 2×6’ @ 90% VMA • r=3’</option>
-              <option value="S3">S3 — 3×4’ (80/90/100%) • r=2’</option>
-              <option value="S4">S4 — 4×3’ projet (90→95%) • r=2’</option>
-              <option value="S5">S5 — Évaluation 4×3’ @ 95% • r=2’</option>
-            </select>
-          </div>
-          <div>
-            <label>Date</label>
-            <input id="sDate" type="date">
-          </div>
-          <div>
-            <label>Titre</label>
-            <input id="sTitre" placeholder="4×3’ r=2’ @ 95% VMA">
-          </div>
-          <div>
-            <label>Longueur de piste (m)</label>
-            <select id="sPiste">
-              <option>200</option><option>250</option><option>300</option><option>333</option><option selected>400</option>
-            </select>
-          </div>
-          <div>
-            <label>Nombre de blocs</label>
-            <input id="sBlocs" type="number" min="1" value="4">
-          </div>
-          <div>
-            <label>Durée d’un bloc (min)</label>
-            <input id="sDuree" type="number" min="1" value="3">
-          </div>
-          <div>
-            <label>Récupération (min)</label>
-            <input id="sRecup" type="number" min="0" value="2">
-          </div>
-          <div>
-            <label>% VMA (scalaire ou liste)</label>
-            <input id="sPct" placeholder="0.95 ou 0.9,0.92,0.94,0.95" value="0.95">
-          </div>
-          <div style="grid-column:1/-1">
-            <label>Consignes</label>
-            <textarea id="sNotes" rows="3" placeholder="Régularité, départ prudent, finish propre"></textarea>
-          </div>
-        </div>
-        <div class="row" style="margin-top:12px">
-          <button class="btn" id="btnPreset">↺ Charger la séance type</button>
-          <button class="btn primary" id="btnGen">🔐 Générer code</button>
-        </div>
-      </div>
 
-      <div class="card">
-        <h2>🔐 Code & (option) QR Séance</h2>
-        <div class="row"><span class="pill">Code : <span id="unlockCode">—</span></span><span class="pill">SeanceID : <span id="sid">—</span></span></div>
-        <div class="sub" style="margin-top:6px">Type : <span id="codeType">—</span></div>
-        <div class="sub" style="margin-top:10px">Donnez uniquement le <b>code</b> aux élèves (pas de QR séance).</div>
+  <main>
+    <section class="card" id="profMain">
+      <h2>🗓️ Créer / choisir la séance</h2>
+      <div class="grid cols-2">
+        <div>
+          <label>Séance type</label>
+          <select id="preset">
+            <option value="S1">S1 — Test 6’ (VMA)</option>
+            <option value="S2">S2 — 2×6’ @ 90% VMA • r=3’</option>
+            <option value="S3">S3 — 3×4’ (80/90/100%) • r=2’</option>
+            <option value="S4">S4 — 4×3’ projet (90→95%) • r=2’</option>
+            <option value="S5">S5 — Évaluation 4×3’ @ 95% • r=2’</option>
+          </select>
+        </div>
+        <div>
+          <label>Date</label>
+          <input id="sDate" type="date">
+        </div>
+        <div>
+          <label>Titre</label>
+          <input id="sTitre" placeholder="4×3’ r=2’ @ 95% VMA">
+        </div>
+        <div>
+          <label>Longueur de piste (m) — saisir n'importe quelle valeur</label>
+          <input id="sPiste" type="number" min="50" step="1" value="200" placeholder="ex: 180, 240, 325">
+        </div>
+        <div>
+          <label>Nombre de blocs</label>
+          <input id="sBlocs" type="number" min="1" value="4">
+        </div>
+        <div>
+          <label>Durée d’un bloc (min)</label>
+          <input id="sDuree" type="number" min="1" value="3">
+        </div>
+        <div>
+          <label>Récupération (min)</label>
+          <input id="sRecup" type="number" min="0" value="2">
+        </div>
+        <div>
+          <label>% VMA (scalaire ou liste)</label>
+          <input id="sPct" placeholder="0.95 ou 0.9,0.92,0.94,0.95" value="0.95">
+        </div>
+        <div style="grid-column:1/-1">
+          <label>Consignes</label>
+          <textarea id="sNotes" rows="3" placeholder="Régularité, départ prudent, finish propre"></textarea>
+        </div>
       </div>
+      <div class="row" style="margin-top:12px">
+        <button class="btn" id="btnPreset">↺ Charger séance type</button>
+        <button class="btn primary" id="btnGen">🔐 Générer / actualiser le code</button>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <span class="pill">Code élèves : <span id="unlockCode">—</span></span>
+        <span class="pill">SeanceID : <span id="sid">—</span></span>
+      </div>
+      <div class="grid cols-2" style="margin-top:12px">
+        <div>
+          <label>Remplacer le code élèves (optionnel)</label>
+          <input id="manualCode" placeholder="ex: 202B ou AB12CD34">
+          <div class="sub">Si rempli, c’est ce code qui sera affiché et stocké pour cette séance.</div>
+        </div>
+      </div>
+      <div class="center" style="margin-top:16px"><a class="btn" href="./index.html">⬅️ Retour</a></div>
     </section>
-    <div class="center" style="margin-top:16px"><a class="btn" href="./index.html">⬅️ Retour</a></div>
   </main>
+
   <footer>RunCycle — Équipe EPS Lycée Vauban — Luxembourg — JB</footer>
+
+  <script>
+  // Ultra-compatible gate (also supports ?p=57 or #57)
+  (function(){
+    function qp(name){ var m=location.search.match(new RegExp('[?&]'+name+'=([^&]+)')); return m? decodeURIComponent(m[1]) : null; }
+    function hideGate(){
+      var gate=document.getElementById('gate'); if(gate) gate.style.display='none';
+    }
+    function tryAuto(){
+      var hash=(location.hash||'').replace('#','').trim();
+      var p=(qp('p')||qp('code')||'').trim();
+      if(hash==='57'||p==='57') hideGate();
+    }
+    function bind(){
+      var gate=document.getElementById('gate'), btn=document.getElementById('gateBtn'), inp=document.getElementById('gateCode'), err=document.getElementById('gateErr');
+      function unlock(){
+        var v=(inp.value||'').trim();
+        if(v==='57'){ hideGate(); }
+        else { if(err) err.style.display='block'; }
+      }
+      if(btn) btn.addEventListener('click', unlock);
+      if(inp) inp.addEventListener('keydown', function(e){ if(e.key==='Enter') unlock(); });
+    }
+    tryAuto();
+    if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', bind); } else { bind(); }
+  })();
+  </script>
+
+  <script>
+  (function(){
+    function ready(fn){ if(document.readyState!=='loading') fn(); else document.addEventListener('DOMContentLoaded', fn); }
+    ready(function(){
+      const C = window.RunCycleCore;
+      const presetSel = document.getElementById('preset');
+      const dateIn = document.getElementById('sDate');
+      const titreIn = document.getElementById('sTitre');
+      const pisteIn = document.getElementById('sPiste');
+      const blocsIn = document.getElementById('sBlocs');
+      const dureeIn = document.getElementById('sDuree');
+      const recupIn = document.getElementById('sRecup');
+      const pctIn = document.getElementById('sPct');
+      const notesIn = document.getElementById('sNotes');
+      const codeSpan = document.getElementById('unlockCode');
+      const sidSpan = document.getElementById('sid');
+      const manualCodeIn = document.getElementById('manualCode');
+
+      function applyPreset(){
+        const pkey = presetSel.value;
+        const p = C.PRESETS[pkey];
+        dateIn.value = dateIn.value || new Date().toISOString().slice(0,10);
+        titreIn.value = p.Titre;
+        blocsIn.value = p.Blocs;
+        dureeIn.value = p.DureeBloc_min;
+        recupIn.value = p.Recup_min;
+        pctIn.value = p.Cible_%VMA.join(',');
+        notesIn.value = p.Notes;
+        pisteIn.value = pisteIn.value || 200;
+      }
+
+      function isExactlyPreset(){
+        const pkey = presetSel.value;
+        const p = C.PRESETS[pkey];
+        return (
+          titreIn.value === p.Titre &&
+          Number(blocsIn.value) === p.Blocs &&
+          Number(dureeIn.value) === p.DureeBloc_min &&
+          Number(recupIn.value) === p.Recup_min &&
+          pctIn.value.replace(/\s+/g,'') === p.Cible_%VMA.join(',')
+        );
+      }
+
+      function genCode(){
+        const seance = C.buildSession({
+          Titre: titreIn.value, DateStr: dateIn.value, Blocs: blocsIn.value,
+          DureeBloc_min: dureeIn.value, Recup_min: recupIn.value,
+          CiblePct: pctIn.value, Piste_m: pisteIn.value, Notes: notesIn.value
+        });
+        let codeOverride = (manualCodeIn.value||'').trim().toUpperCase();
+        let code;
+        if(codeOverride){
+          code = codeOverride;
+          if(!C.presetForCode || !C.presetForCode(code)) C.saveCustomSession(code, seance);
+        }else if(isExactlyPreset()){
+          code = C.codeForPreset ? C.codeForPreset(presetSel.value) : '000X';
+        }else{
+          code = C.genExtendedCode();
+          C.saveCustomSession(code, seance);
+        }
+        codeSpan.textContent = code;
+        sidSpan.textContent = seance.SeanceID;
+        localStorage.setItem('RC_last_seance', JSON.stringify({unlock:code, seance:seance}));
+      }
+
+      document.getElementById('btnPreset').addEventListener('click', function(){ applyPreset(); genCode(); });
+      document.getElementById('btnGen').addEventListener('click', genCode);
+      presetSel.addEventListener('change', function(){ applyPreset(); genCode(); });
+
+      // init
+      applyPreset(); genCode();
+    });
+  })();
+  </script>
 </body>
 </html>
