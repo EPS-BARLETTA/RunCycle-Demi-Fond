@@ -71,13 +71,7 @@
       sidSpan.textContent = seance.SeanceID;
 
       // Optional: QR séance with JSON (if tu veux quand même projeter)
-      qrBox.innerHTML = '';
-      if(typeof QRCode!=='undefined'){
-        new QRCode(qrBox,{text: JSON.stringify({unlock:code, seance:seance}), width:220, height:220});
-      }else{
-        qrBox.innerHTML = '<div class="sub">QR lib non dispo — le code suffit: <b>'+code+'</b></div>';
-      }
-      // Keep last on this device (utile si tablette prof == tablette élèves)
+      /* QR séance désactivé */// Keep last on this device (utile si tablette prof == tablette élèves)
       localStorage.setItem('RC_last_seance', JSON.stringify({unlock:code, seance:seance}));
     }
 
@@ -86,6 +80,21 @@
     // init
     applyPreset();
 
+    // === Robust Gate '57' (no hints, no deps) ===
+    (function(){
+      var gate = document.getElementById('gate');
+      var btn = document.getElementById('gateBtn');
+      var inp = document.getElementById('gateCode');
+      var err = document.getElementById('gateErr');
+      function unlock(){
+        var v = (inp.value||'').trim();
+        if(v === '57'){ gate.style.display='none'; try{ document.getElementById('preset').focus(); }catch(e){} }
+        else { err.style.display='block'; }
+      }
+      if(btn){ btn.addEventListener('click', unlock); }
+      if(inp){ inp.addEventListener('keydown', function(e){ if(e.key==='Enter'){ unlock(); }}); }
+    })();
+    
     // --- Gate access '57'
     const gate = document.getElementById('gate');
     const gateBtn = document.getElementById('gateBtn');
@@ -191,8 +200,7 @@
         <h2>🔐 Code & (option) QR Séance</h2>
         <div class="row"><span class="pill">Code : <span id="unlockCode">—</span></span><span class="pill">SeanceID : <span id="sid">—</span></span></div>
         <div class="sub" style="margin-top:6px">Type : <span id="codeType">—</span></div>
-        <div id="qrSeance" class="qr-box" style="margin-top:10px"></div>
-        <div class="sub">Les élèves n’ont besoin que du <b>code</b>. Le QR séance est facultatif.</div>
+        <div class="sub" style="margin-top:10px">Donnez uniquement le <b>code</b> aux élèves (pas de QR séance).</div>
       </div>
     </section>
     <div class="center" style="margin-top:16px"><a class="btn" href="./index.html">⬅️ Retour</a></div>
