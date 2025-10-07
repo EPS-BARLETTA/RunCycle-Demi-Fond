@@ -4,144 +4,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>RunCycle — Mode Élèves</title>
+  <title>RunCycle — Mode Élèves (MVP)</title>
   <link rel="stylesheet" href="./style.css" />
-  <script src="./core.js" defer></script>
-  <script>
-  document.addEventListener('DOMContentLoaded', ()=>{
-    const C = window.RunCycleCore;
-    const pisteIn = document.getElementById('ePiste');
-    const codeIn = document.getElementById('unlockIn');
-    const seanceBox = document.getElementById('seanceLoaded');
-    const tbody = document.getElementById('tbodyBlocs');
-    const targets = document.getElementById('targets');
-    const resultBox = document.getElementById('qrResult');
-    let currentSeance=null;
-
-    function loadFromCode(){
-      const code=(codeIn.value||'').trim().toUpperCase();
-      if(!code){ alert('Entrez le code de la séance donné par le prof'); return; }
-      const s=C.resolveByCode(code,{Piste_m:Number(pisteIn.value||200)});
-      if(!s){
-        const last=localStorage.getItem('RC_last_seance');
-        if(last){
-          const obj=JSON.parse(last);
-          if((obj.unlock||'').toUpperCase()===code){ currentSeance=obj.seance; renderSeance(); return; }
-        }
-        alert('Code inconnu sur cet appareil. Utilisez un code type (101A…505E) ou un code perso enregistré sur cet appareil.');
-        return;
-      }
-      currentSeance=s; renderSeance();
-    }
-
-    function renderSeance(){
-      const s=currentSeance; if(!s) return;
-      seanceBox.innerHTML = '<div class="row"><span class="pill">'+s.Titre+'</span><span class="pill">Blocs: '+s.Blocs+' • '+s.DureeBloc_min+"' r="+s.Recup_min+"'</span><span class="pill">Piste: '+(Number(pisteIn.value||s.Piste_m||200))+' m</span></div><div class="sub" style="margin-top:6px">Consignes : '+(s.Consignes||'')+'</div>';
-      seanceBox.classList.remove('hidden'); buildBlocTable();
-    }
-
-    function buildBlocTable(){
-      const s=currentSeance; if(!s) return;
-      tbody.innerHTML='';
-      for(let i=1;i<=s.Blocs;i++){
-        const tr=document.createElement('tr');
-        tr.innerHTML='<td>'+i+'</td>' +
-          '<td><input type="number" min="0" step="1" id="a_m_'+i+'" placeholder="m"></td>' +
-          '<td><input type="number" min="0" max="10" step="1" id="a_r_'+i+'" placeholder="RPE"></td>' +
-          '<td><input type="number" min="0" step="1" id="b_m_'+i+'" placeholder="m"></td>' +
-          '<td><input type="number" min="0" max="10" step="1" id="b_r_'+i+'" placeholder="RPE"></td>';
-        tbody.appendChild(tr);
-      }
-      updateTargets();
-      document.getElementById('saisieBlocs').classList.remove('hidden');
-    }
-
-    function updateTargets(){
-      const s=currentSeance; if(!s) return;
-      const aVMA=Number(document.getElementById('aVMA').value||0);
-      const bVMA=Number(document.getElementById('bVMA').value||0);
-      const pct=Array.isArray(s['Cible_%VMA'])? s['Cible_%VMA'] : Array(s.Blocs).fill(Number(s['Cible_%VMA']||0));
-      const cA=aVMA? pct.map(p=> Math.round(C.mPerMin(aVMA*p)*s.DureeBloc_min)) : [];
-      const cB=bVMA? pct.map(p=> Math.round(C.mPerMin(bVMA*p)*s.DureeBloc_min)) : [];
-      targets.innerHTML = (aVMA||bVMA)? 'Cibles (m/bloc) — A: <b>'+(cA.join(' • ')||'—')+'</b> | B: <b>'+(cB.join(' • ')||'—')+'</b>' : 'Renseignez la VMA pour voir vos cibles.';
-    }
-
-    function collectResults(){
-      const s=currentSeance; const n=s.Blocs;
-      const A={ Nom:(document.getElementById('aNom').value||'').toUpperCase(), Prénom:document.getElementById('aPrenom').value||'', Classe:document.getElementById('aClasse').value||'', Sexe:document.getElementById('aSexe').value||'', VMA:Number(document.getElementById('aVMA').value||0) };
-      const B={ Nom:(document.getElementById('bNom').value||'').toUpperCase(), Prénom:document.getElementById('bPrenom').value||'', Classe:document.getElementById('bClasse').value||'', Sexe:document.getElementById('bSexe').value||'', VMA:Number(document.getElementById('bVMA').value||0) };
-      const am=[], ar=[], bm=[], br=[]; for(let i=1;i<=n;i++){ am.push(Number(document.getElementById(`a_m_${i}`).value||0)); ar.push(Number(document.getElementById(`a_r_${i}`).value||0)); bm.push(Number(document.getElementById(`b_m_${i}`).value||0)); br.push(Number(document.getElementById(`b_r_${i}`).value||0)); }
-      return {s,A,B,am,ar,bm,br};
-    }
-
-    function genQR(mode){
-      if(!currentSeance){ alert('Séance non chargée'); return; }
-      const {s,A,B,am,ar,bm,br}=collectResults();
-      const totalMin=s.Blocs*s.DureeBloc_min;
-      const vA=C.kmhFromMeters(am.reduce((a,b)=>a+b,0),totalMin);
-      const vB=C.kmhFromMeters(bm.reduce((a,b)=>a+b,0),totalMin);
-      const pct=Array.isArray(s['Cible_%VMA'])? s['Cible_%VMA'] : Array(s.Blocs).fill(Number(s['Cible_%VMA']||0));
-      const cibleA=A.VMA? (A.VMA*C.mean(pct)) : 0;
-      const cibleB=B.VMA? (B.VMA*C.mean(pct)) : 0;
-      const ecA=+(vA-cibleA).toFixed(2);
-      const ecB=+(vB-cibleB).toFixed(2);
-      resultBox.innerHTML='';
-      // QR code generator dependency removed earlier; we'll use fallback text box
-      const payload = (mode==='duo') ?
-        { v:1, format:'duo', SeanceID:s.SeanceID, Seance:s.Titre, Piste_m:Number(pisteIn.value||s.Piste_m||200),
-          eleves:[
-            { Nom:A.Nom, Prénom:A.Prénom, Classe:A.Classe, Sexe:A.Sexe, VMA:A.VMA, Blocs_m:am, RPE:ar, Vitesse_moy_km_h:+vA.toFixed(2), Ecart_km_h:ecA },
-            { Nom:B.Nom, Prénom:B.Prénom, Classe:B.Classe, Sexe:B.Sexe, VMA:B.VMA, Blocs_m:bm, RPE:br, Vitesse_moy_km_h:+vB.toFixed(2), Ecart_km_h:ecB }
-          ]} :
-        (mode==='soloA' ?
-          { v:1, format:'solo', SeanceID:s.SeanceID, Seance:s.Titre, Piste_m:Number(pisteIn.value||s.Piste_m||200),
-            Nom:A.Nom, Prénom:A.Prénom, Classe:A.Classe, Sexe:A.Sexe, VMA:A.VMA, Blocs_m:am, RPE:ar, Vitesse_moy_km_h:+vA.toFixed(2), Ecart_km_h:ecA } :
-          { v:1, format:'solo', SeanceID:s.SeanceID, Seance:s.Titre, Piste_m:Number(pisteIn.value||s.Piste_m||200),
-            Nom:B.Nom, Prénom:B.Prénom, Classe:B.Classe, Sexe:B.Sexe, VMA:B.VMA, Blocs_m:bm, RPE:br, Vitesse_moy_km_h:+vB.toFixed(2), Ecart_km_h:ecB });
-      // Render payload text (ScanProf côté prof scannera le QR réel; ici on affiche JSON si lib absente)
-      resultBox.innerHTML = '<div style="padding:10px;border:1px dashed #555;border-radius:8px;max-width:500px"><div style="font:12px monospace;white-space:pre-wrap;word-break:break-word">'+
-        JSON.stringify(payload) + '</div><div class="sub" style="margin-top:6px">QR: si besoin on réactive la lib de génération.</div></div>';
-    }
-
-    document.getElementById('btnLoad').addEventListener('click', loadFromCode);
-    document.getElementById('btnQRDuo').addEventListener('click', ()=>genQR('duo'));
-    document.getElementById('btnQRA').addEventListener('click', ()=>genQR('soloA'));
-    document.getElementById('btnQRB').addEventListener('click', ()=>genQR('soloB'));
-    document.getElementById('aVMA').addEventListener('input', updateTargets);
-    document.getElementById('bVMA').addEventListener('input', updateTargets);
-    document.getElementById('ePiste').addEventListener('input', ()=>{ if(currentSeance){ renderSeance(); }});
-  });
-  </script>
 </head>
 <body>
   <header>
     <h1>RunCycle — Mode Élèves (Binôme)</h1>
-    <div class="sub">Profil A/B → Code → VMA + piste → Distances + RPE → QR DUO</div>
+    <div class="sub">Code → VMA + piste → Cibles → Chrono → Distances + RPE → QR DUO</div>
   </header>
   <main>
-    <section class="grid cols-2">
-      <div class="card frameA">
-        <h2>👤 Élève A</h2>
-        <div class="grid cols-2">
-          <div><label>Nom</label><input id="aNom" placeholder="DUPONT"></div>
-          <div><label>Prénom</label><input id="aPrenom" placeholder="Alice"></div>
-          <div><label>Classe</label><input id="aClasse" placeholder="4C"></div>
-          <div><label>Sexe</label><select id="aSexe"><option>F</option><option>M</option></select></div>
-          <div><label>VMA (km/h)</label><input id="aVMA" type="number" step="0.1"></div>
-        </div>
-      </div>
-      <div class="card frameB">
-        <h2>👤 Élève B</h2>
-        <div class="grid cols-2">
-          <div><label>Nom</label><input id="bNom" placeholder="MARTIN"></div>
-          <div><label>Prénom</label><input id="bPrenom" placeholder="Noah"></div>
-          <div><label>Classe</label><input id="bClasse" placeholder="4C"></div>
-          <div><label>Sexe</label><select id="bSexe"><option>F</option><option selected>M</option></select></div>
-          <div><label>VMA (km/h)</label><input id="bVMA" type="number" step="0.1"></div>
-        </div>
-      </div>
-    </section>
-
     <section class="card">
       <h2>🔓 Charger la séance</h2>
       <div class="grid cols-2">
@@ -161,9 +32,44 @@
       <div id="seanceLoaded" class="card hidden" style="margin-top:12px"></div>
     </section>
 
+    <section class="grid cols-2 hidden" id="profiles">
+      <div class="card">
+        <h2>👤 Élève A</h2>
+        <div class="grid cols-2">
+          <div><label>Nom</label><input id="aNom" placeholder="DUPONT"></div>
+          <div><label>Prénom</label><input id="aPrenom" placeholder="Alice"></div>
+          <div><label>Classe</label><input id="aClasse" placeholder="4C"></div>
+          <div><label>Sexe</label><select id="aSexe"><option>F</option><option>M</option></select></div>
+          <div><label>VMA (km/h)</label><input id="aVMA" type="number" step="0.1"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>👤 Élève B</h2>
+        <div class="grid cols-2">
+          <div><label>Nom</label><input id="bNom" placeholder="MARTIN"></div>
+          <div><label>Prénom</label><input id="bPrenom" placeholder="Noah"></div>
+          <div><label>Classe</label><input id="bClasse" placeholder="4C"></div>
+          <div><label>Sexe</label><select id="bSexe"><option>F</option><option selected>M</option></select></div>
+          <div><label>VMA (km/h)</label><input id="bVMA" type="number" step="0.1"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="sessionWork" class="card hidden">
+      <h2>🎯 Cibles & Chrono</h2>
+      <div id="targets" class="sub" style="margin-bottom:8px"></div>
+      <div class="timer">
+        <span class="pill" id="phase">Prêt</span>
+        <span class="time" id="tclock">00:00</span>
+        <button class="btn" id="tStart">▶️ Start</button>
+        <button class="btn" id="tPause">⏸️ Pause</button>
+        <button class="btn" id="tReset">↺ Reset</button>
+        <span class="pill">Bloc <span id="blocIdx">0</span>/<span id="blocTot">0</span></span>
+      </div>
+    </section>
+
     <section id="saisieBlocs" class="card hidden">
       <h2>📝 Saisie des blocs & RPE</h2>
-      <div id="targets" class="sub" style="margin-bottom:8px"></div>
       <table>
         <thead><tr><th>Bloc</th><th>Distance A (m)</th><th>RPE A (0–10)</th><th>Distance B (m)</th><th>RPE B (0–10)</th></tr></thead>
         <tbody id="tbodyBlocs"></tbody>
@@ -173,10 +79,142 @@
         <button class="btn" id="btnQRA">QR A</button>
         <button class="btn" id="btnQRB">QR B</button>
       </div>
-      <div id="qrResult" class="qr-box" style="margin-top:10px"></div>
+      <div id="qrResult" class="card" style="margin-top:10px"></div>
     </section>
-    <div class="center" style="margin-top:16px"><a class="btn" href="./index.html">⬅️ Retour</a></div>
   </main>
   <footer>RunCycle — Équipe EPS Lycée Vauban — Luxembourg — JB</footer>
+
+  <script>
+    const PRESETS = {
+      "101A": { key:"S1", Titre:"Test 6' (estimation VMA)", Blocs:1, DureeBloc_min:6, Recup_min:0, Cible_%VMA:[], Notes:"" },
+      "202B": { key:"S2", Titre:"2×6' @ 90% VMA (r=3')", Blocs:2, DureeBloc_min:6, Recup_min:3, Cible_%VMA:[0.90,0.90], Notes:"" },
+      "303C": { key:"S3", Titre:"3×4' aux allures 80/90/100% (r=2')", Blocs:3, DureeBloc_min:4, Recup_min:2, Cible_%VMA:[0.80,0.90,1.00], Notes:"" },
+      "404D": { key:"S4", Titre:"4×3' projet @ 90–95% (r=2')", Blocs:4, DureeBloc_min:3, Recup_min:2, Cible_%VMA:[0.90,0.92,0.94,0.95], Notes:"" },
+      "505E": { key:"S5", Titre:"Éval 4×3' @ 95% (r=2')", Blocs:4, DureeBloc_min:3, Recup_min:2, Cible_%VMA:[0.95,0.95,0.95,0.95], Notes:"Objectif ±0,5 km/h." }
+    };
+    let current = null, timer=null, remaining=0, phase='Prêt', bloc=0;
+
+    function loadFromCode(){
+      const code = (document.getElementById('unlockIn').value||'').trim().toUpperCase();
+      if(!code){ alert('Entrez le code'); return; }
+      const preset = PRESETS[code];
+      if(!preset){ alert('Code inconnu : utilisez 101A..505E'); return; }
+      const piste = Number(document.getElementById('ePiste').value||200);
+      current = {...preset, Piste_m:piste, SeanceID:(new Date().toISOString().slice(0,10))+'_'+Math.random().toString(36).slice(2,6).toUpperCase()};
+      renderSeance(); buildBlocTable(); setupTimer();
+      document.getElementById('profiles').classList.remove('hidden');
+      document.getElementById('sessionWork').classList.remove('hidden');
+      document.getElementById('saisieBlocs').classList.remove('hidden');
+    }
+
+    function renderSeance(){
+      const s=current;
+      const div=document.getElementById('seanceLoaded');
+      div.innerHTML = '<div class="row"><span class="pill">'+s.Titre+'</span><span class="pill">Blocs: '+s.Blocs+' • '+s.DureeBloc_min+"' r="+s.Recup_min+"'</span><span class="pill">Piste: '+s.Piste_m+' m</span></div>';
+      div.classList.remove('hidden');
+      document.getElementById('blocTot').textContent = s.Blocs;
+    }
+
+    function buildBlocTable(){
+      const s=current, tb=document.getElementById('tbodyBlocs'); tb.innerHTML='';
+      for(let i=1;i<=s.Blocs;i++){
+        const tr=document.createElement('tr');
+        tr.innerHTML='<td>'+i+'</td>'+
+          '<td><input type="number" min="0" step="1" id="a_m_'+i+'" placeholder="m"></td>'+
+          '<td><input type="number" min="0" max="10" step="1" id="a_r_'+i+'" placeholder="RPE"></td>'+
+          '<td><input type="number" min="0" step="1" id="b_m_'+i+'" placeholder="m"></td>'+
+          '<td><input type="number" min="0" max="10" step="1" id="b_r_'+i+'" placeholder="RPE"></td>';
+        tb.appendChild(tr);
+      }
+      updateTargets();
+    }
+
+    function mPerMin(kmh){ return (kmh*1000)/60; }
+    function mean(arr){ return arr.reduce((a,b)=>a+b,0)/arr.length; }
+
+    function updateTargets(){
+      const s=current;
+      const aV=Number(document.getElementById('aVMA').value||0);
+      const bV=Number(document.getElementById('bVMA').value||0);
+      const pct = s.Cible_%VMA.length? s.Cible_%VMA : Array(s.Blocs).fill(1);
+      const dA = aV? pct.map(p=> Math.round(mPerMin(aV*p)*s.DureeBloc_min)) : [];
+      const dB = bV? pct.map(p=> Math.round(mPerMin(bV*p)*s.DureeBloc_min)) : [];
+      document.getElementById('targets').innerHTML = (aV||bV)
+        ? 'Cibles (m/bloc) — A: <b>'+(dA.join(' • ')||'—')+'</b> | B: <b>'+(dB.join(' • ')||'—')+'</b>'
+        : 'Renseignez la VMA pour voir vos cibles.';
+    }
+
+    function setupTimer(){
+      const s=current; phase='Prêt'; bloc=0; remaining=0;
+      const t=document.getElementById('tclock'), ph=document.getElementById('phase'), idx=document.getElementById('blocIdx');
+      function fmt(sec){ const m=Math.floor(sec/60), s=sec%60; return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); }
+      function tick(){
+        if(remaining>0){ remaining--; t.textContent=fmt(remaining); }
+        else{
+          if(phase==='Prêt' || phase==='Récup'){
+            if(bloc>=current.Blocs){ clearInterval(timer); ph.textContent='Terminé'; return; }
+            bloc++; idx.textContent=bloc; phase='Effort'; ph.textContent='Effort'; remaining=current.DureeBloc_min*60; t.textContent=fmt(remaining);
+          }else{
+            if(current.Recup_min>0){ phase='Récup'; ph.textContent='Récup'; remaining=current.Recup_min*60; t.textContent=fmt(remaining); }
+            else{
+              if(bloc>=current.Blocs){ clearInterval(timer); ph.textContent='Terminé'; return; }
+              bloc++; idx.textContent=bloc; phase='Effort'; ph.textContent='Effort'; remaining=current.DureeBloc_min*60; t.textContent=fmt(remaining);
+            }
+          }
+        }
+      }
+      document.getElementById('tStart').onclick = ()=>{ if(timer) clearInterval(timer); tick(); timer=setInterval(tick,1000); };
+      document.getElementById('tPause').onclick = ()=>{ if(timer) clearInterval(timer); };
+      document.getElementById('tReset').onclick = ()=>{ if(timer) clearInterval(timer); phase='Prêt'; bloc=0; remaining=0; ph.textContent='Prêt'; t.textContent='00:00'; idx.textContent='0'; };
+    }
+
+    function kmh(total_m, total_min){ return (total_m/1000)/(total_min/60); }
+
+    function genPayload(mode){
+      const s=current, n=s.Blocs;
+      const A={ Nom:(document.getElementById('aNom').value||'').toUpperCase(), Prénom:document.getElementById('aPrenom').value||'', Classe:document.getElementById('aClasse').value||'', Sexe:document.getElementById('aSexe').value||'', VMA:Number(document.getElementById('aVMA').value||0) };
+      const B={ Nom:(document.getElementById('bNom').value||'').toUpperCase(), Prénom:document.getElementById('bPrenom').value||'', Classe:document.getElementById('bClasse').value||'', Sexe:document.getElementById('bSexe').value||'', VMA:Number(document.getElementById('bVMA').value||0) };
+      const am=[], ar=[], bm=[], br=[]; for(let i=1;i<=n;i++){ am.push(Number(document.getElementById(`a_m_${i}`).value||0)); ar.push(Number(document.getElementById(`a_r_${i}`).value||0)); bm.push(Number(document.getElementById(`b_m_${i}`).value||0)); br.push(Number(document.getElementById(`b_r_${i}`).value||0)); }
+
+      const totalMin = s.Blocs * s.DureeBloc_min;
+      const vA = kmh(am.reduce((a,b)=>a+b,0), totalMin);
+      const vB = kmh(bm.reduce((a,b)=>a+b,0), totalMin);
+      const pct = s.Cible_%VMA.length? s.Cible_%VMA : Array(s.Blocs).fill(1);
+      const cibleA = A.VMA? (A.VMA * mean(pct)) : 0;
+      const cibleB = B.VMA? (B.VMA * mean(pct)) : 0;
+      const ecA = +(vA - cibleA).toFixed(2);
+      const ecB = +(vB - cibleB).toFixed(2);
+
+      if(mode==='duo'){
+        return { v:1, format:'duo', SeanceID:s.SeanceID, Seance:s.Titre, Piste_m:s.Piste_m,
+          eleves:[
+            { Nom:A.Nom, Prénom:A.Prénom, Classe:A.Classe, Sexe:A.Sexe, VMA:A.VMA, Blocs_m:am, RPE:ar, Vitesse_moy_km_h:+vA.toFixed(2), Ecart_km_h:ecA },
+            { Nom:B.Nom, Prénom:B.Prénom, Classe:B.Classe, Sexe:B.Sexe, VMA:B.VMA, Blocs_m:bm, RPE:br, Vitesse_moy_km_h:+vB.toFixed(2), Ecart_km_h:ecB }
+          ] };
+      } else if(mode==='soloA'){
+        return { v:1, format:'solo', SeanceID:s.SeanceID, Seance:s.Titre, Piste_m:s.Piste_m,
+          Nom:A.Nom, Prénom:A.Prénom, Classe:A.Classe, Sexe:A.Sexe, VMA:A.VMA, Blocs_m:am, RPE:ar, Vitesse_moy_km_h:+vA.toFixed(2), Ecart_km_h:ecA };
+      } else {
+        return { v:1, format:'solo', SeanceID:s.SeanceID, Seance:s.Titre, Piste_m:s.Piste_m,
+          Nom:B.Nom, Prénom:B.Prénom, Classe:B.Classe, Sexe:B.Sexe, VMA:B.VMA, Blocs_m:bm, RPE:br, Vitesse_moy_km_h:+vB.toFixed(2), Ecart_km_h:ecB };
+      }
+    }
+
+    function showQR(mode){
+      const payload = genPayload(mode);
+      const json = JSON.stringify(payload);
+      const url = 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' + encodeURIComponent(json);
+      document.getElementById('qrResult').innerHTML = '<div class="row"><img alt="QR" src="'+url+'"><textarea style="width:100%;margin-top:10px" rows="5">'+json+'</textarea></div>';
+    }
+
+    document.getElementById('btnLoad').addEventListener('click', loadFromCode);
+    document.getElementById('aVMA').addEventListener('input', updateTargets);
+    document.getElementById('bVMA').addEventListener('input', updateTargets);
+    document.getElementById('ePiste').addEventListener('input', ()=>{ if(current){ current.Piste_m = Number(document.getElementById('ePiste').value||200); renderSeance(); updateTargets(); } });
+
+    document.getElementById('btnQRDuo').addEventListener('click', ()=>showQR('duo'));
+    document.getElementById('btnQRA').addEventListener('click', ()=>showQR('soloA'));
+    document.getElementById('btnQRB').addEventListener('click', ()=>showQR('soloB'));
+  </script>
 </body>
 </html>
