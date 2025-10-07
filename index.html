@@ -1,219 +1,34 @@
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calcul de VMA</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            padding: 20px;
-            max-width: 600px;
-            margin: auto;
-        }
-        input, button {
-            font-size: 18px;
-            margin: 10px 0;
-            padding: 10px;
-            width: 100%;
-            max-width: 500px;
-        }
-        button {
-            cursor: pointer;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-        }
-        .btn-start { background-color: #4CAF50; border-radius: 5px; }
-        .btn-plot { background-color: #2196F3; }
-        .btn-reset { background-color: #f44336; position: absolute; right: 20px; top: 20px; }
-        .btn-download { background-color: #FF9800; position: absolute; left: 20px; top: 20px; }
-        .info-box {
-            border: 2px solid #4CAF50;
-            padding: 15px;
-            background-color: #e8f5e9;
-            margin-top: 20px;
-        }
-        .results {
-            margin-top: 20px;
-            border: 1px solid #ddd;
-            padding: 10px;
-            background-color: #f9f9f9;
-        }
-        .final-summary {
-            margin-top: 20px;
-            padding: 15px;
-            border: 2px solid #4CAF50;
-            background-color: #e0f7fa;
-            font-weight: bold;
-        }
-        label { display: block; margin-top: 10px; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RunCycle — Demi‑fond (Prof & Élèves)</title>
+  <link rel="stylesheet" href="./style.css" />
+  <script src="./qr-loader.js" defer></script>
+  <script src="./qr.min.js" defer></script>
+  <script src="./core.js" defer></script>
 </head>
 <body>
-
-    <h1>Calcul de la VMA</h1>
-
-    <!-- Information sur le coureur et l'observateur -->
-    <input type="text" id="runnerName" placeholder="Nom du coureur" required>
-    <input type="text" id="runnerClass" placeholder="Classe du coureur" style="width: 100px; display: inline-block;" required>
-    <input type="text" id="observerName" placeholder="Nom de l'observateur" required>
-
-    <!-- VMA du coureur et pourcentage cible -->
-    <label for="runnerVMA">VMA du coureur (km/h) :</label>
-    <input type="number" id="runnerVMA" placeholder="VMA du coureur" step="0.5" required>
-    
-    <label for="targetPercentage">Pourcentage de la VMA cible (%) :</label>
-    <input type="number" id="targetPercentage" placeholder="Ex: 90" step="0.5" required oninput="updateTargetInfo()">
-
-    <!-- Durée de la course -->
-    <label for="duration">Durée de la course (en minutes, multiples de 1:30) :</label>
-    <input type="number" id="duration" min="1.5" step="1.5" value="3">
-
-    <!-- Encadré pour les informations sur le % et les plots requis -->
-    <div id="infoBox" class="info-box" style="display: none;"></div>
-
-    <!-- Bouton pour démarrer la course -->
-    <button class="btn-start" onclick="startRace()">Démarrer la course</button>
-    <button class="btn-reset" onclick="resetRace()">&#x21bb;</button>
-    <button class="btn-download" onclick="downloadResults()">&#x2193;</button>
-
-    <div id="controlSection" style="display:none;">
-        <!-- Boutons de contrôle pour passer les plots et télécharger les résultats -->
-        <button class="btn-plot" onclick="addPlot()">Passer un plot</button>
-        
-        <!-- Affichage des informations dynamiques -->
-        <p>Temps écoulé : <span id="timeElapsed">0:00</span></p>
-        <p>Plots passés : <span id="plotCount">0</span></p>
-        <div class="results" id="resultsLog"></div>
-        <div class="final-summary" id="finalSummary" style="display: none;"></div>
-    </div>
-
-    <script>
-        let duration, interval, timeElapsed = 0, plotCount = 0, results = [], vmaTarget, plotsPerInterval, outsideTargetCount = 0;
-
-        function updateTargetInfo() {
-            const runnerVMA = parseFloat(document.getElementById("runnerVMA").value);
-            const targetPercentage = parseFloat(document.getElementById("targetPercentage").value);
-            
-            if (!isNaN(runnerVMA) && !isNaN(targetPercentage)) {
-                vmaTarget = (runnerVMA * (targetPercentage / 100)).toFixed(2);
-                plotsPerInterval = (vmaTarget * 1.5 / 3.6 / 0.5).toFixed(2);
-                
-                document.getElementById("infoBox").style.display = "block";
-                document.getElementById("infoBox").innerHTML = `À ${targetPercentage}% de la VMA (${vmaTarget} km/h), le coureur doit passer ${plotsPerInterval} plots par 1:30.`;
-            }
-        }
-
-        function startRace() {
-            const runnerName = document.getElementById("runnerName").value;
-            const runnerClass = document.getElementById("runnerClass").value;
-            const observerName = document.getElementById("observerName").value;
-
-            if (!runnerName || !runnerClass || !observerName || isNaN(vmaTarget) || isNaN(plotsPerInterval)) {
-                alert("Veuillez remplir toutes les informations avant de démarrer la course.");
-                return;
-            }
-
-            duration = parseFloat(document.getElementById("duration").value) * 60;
-            plotCount = 0;
-            results = [`Coureur : ${runnerName}, Classe : ${runnerClass}, Observateur : ${observerName}`];
-            timeElapsed = 0;
-            outsideTargetCount = 0;
-
-            document.getElementById("controlSection").style.display = "block";
-            document.getElementById("plotCount").textContent = plotCount;
-            document.getElementById("timeElapsed").textContent = formatTime(0);
-            document.getElementById("resultsLog").innerHTML = "";
-            document.getElementById("finalSummary").style.display = "none";
-
-            interval = setInterval(updateTime, 1000);
-        }
-
-        function updateTime() {
-            timeElapsed++;
-            document.getElementById("timeElapsed").textContent = formatTime(timeElapsed);
-
-            if (timeElapsed % 90 === 0) {
-                calculateVMA();
-                plotCount = 0;
-            }
-
-            if (timeElapsed >= duration) {
-                clearInterval(interval);
-                calculateVMA();
-                displayFinalSummary();
-            }
-        }
-
-        function addPlot() {
-            plotCount++;
-            document.getElementById("plotCount").textContent = plotCount;
-        }
-
-        function calculateVMA() {
-            const vmaCurrent = (plotCount * 0.5) * (3.6 / 1.5);
-            const plotDiff = Math.abs(plotsPerInterval - plotCount);
-            const outOfRange = plotDiff > 0.5;
-            
-            if (outOfRange) outsideTargetCount++;
-
-            const message = `Après ${formatTime(timeElapsed)} : ${vmaCurrent.toFixed(2)} km/h avec ${plotCount} plots (Écart : ${plotDiff.toFixed(2)} km/h)`;
-            document.getElementById("resultsLog").innerHTML += `<p>${message}</p>`;
-            results.push(message);
-        }
-
-        function displayFinalSummary() {
-            const totalVMA = results.reduce((sum, entry) => {
-                const match = entry.match(/(\d+\.\d+) km\/h/);
-                return sum + (match ? parseFloat(match[1]) : 0);
-            }, 0);
-
-            const averageVMA = (totalVMA / (results.length - 1)).toFixed(2);
-            const summaryMessage = `Bilan : Vitesse moyenne ${averageVMA} km/h. En dehors de la cible ${outsideTargetCount} fois.`;
-
-            document.getElementById("finalSummary").textContent = summaryMessage;
-            document.getElementById("finalSummary").style.display = "block";
-        }
-
-        function resetRace() {
-            clearInterval(interval);
-                       timeElapsed = 0;
-            plotCount = 0;
-            results = [];
-            outsideTargetCount = 0;
-
-            document.getElementById("runnerName").value = "";
-            document.getElementById("runnerClass").value = "";
-            document.getElementById("observerName").value = "";
-            document.getElementById("runnerVMA").value = "";
-            document.getElementById("targetPercentage").value = "";
-            document.getElementById("duration").value = "3";
-            document.getElementById("controlSection").style.display = "none";
-            document.getElementById("infoBox").style.display = "none";
-            document.getElementById("resultsLog").innerHTML = "";
-            document.getElementById("finalSummary").style.display = "none";
-        }
-
-        function downloadResults() {
-            const blob = new Blob([results.join("\n")], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = "resultats_vma.txt";
-            a.click();
-            URL.revokeObjectURL(url);
-        }
-
-        function formatTime(seconds) {
-            const minutes = Math.floor(seconds / 60);
-            const secs = seconds % 60;
-            return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
-        }
-    </script>
-
+  <header>
+    <h1>RunCycle — Demi‑fond <span class="badge">Prototype</span></h1>
+    <div class="sub">Application commune <strong>Prof & Élèves</strong> • Déverrouillage par <strong>code simple</strong> (ou QR séance facultatif)</div>
+  </header>
+  <main>
+    <section id="garde" class="card">
+      <div class="center" style="display:grid;gap:14px;justify-items:center">
+        <div class="row" style="gap:10px">
+          <a class="btn primary" href="./prof.html">▶️ Démarrer (Prof)</a>
+          <a class="btn green" href="./eleve.html">▶️ Démarrer (Élèves)</a>
+        </div>
+        <div class="row">
+          <a class="btn" href="./aide.html">❓ Aide</a>
+          <a class="btn amber" href="./securite.html">⚠️ Fiche sécurité</a>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer>RunCycle — Équipe EPS Lycée Vauban — Luxembourg — JB</footer>
 </body>
 </html>

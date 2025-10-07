@@ -1,0 +1,164 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RunCycle — Mode Prof</title>
+  <link rel="stylesheet" href="./style.css" />
+  <script src="./qr-loader.js" defer></script>
+  <script src="./qr.min.js" defer></script>
+  <script src="./core.js" defer></script>
+  <script defer>
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const C = window.RunCycleCore;
+    // Elements
+    const presetSel = document.getElementById('preset');
+    const dateIn = document.getElementById('sDate');
+    const titreIn = document.getElementById('sTitre');
+    const pisteSel = document.getElementById('sPiste');
+    const blocsIn = document.getElementById('sBlocs');
+    const dureeIn = document.getElementById('sDuree');
+    const recupIn = document.getElementById('sRecup');
+    const pctIn = document.getElementById('sPct');
+    const notesIn = document.getElementById('sNotes');
+    const codeSpan = document.getElementById('unlockCode');
+    const sidSpan = document.getElementById('sid');
+    const qrBox = document.getElementById('qrSeance');
+    const codeTypeSpan = document.getElementById('codeType');
+
+    function applyPreset(){
+      const pkey = presetSel.value;
+      const p = C.PRESETS[pkey];
+      dateIn.value = dateIn.value || new Date().toISOString().slice(0,10);
+      titreIn.value = p.Titre;
+      blocsIn.value = p.Blocs;
+      dureeIn.value = p.DureeBloc_min;
+      recupIn.value = p.Recup_min;
+      pctIn.value = p.Cible_%VMA.join(',');
+      notesIn.value = p.Notes;
+    }
+
+    function genCode(){
+      const isPreset = !!C.PRESETS[presetSel.value] &&
+        titreIn.value === C.PRESETS[presetSel.value].Titre &&
+        Number(blocsIn.value) === C.PRESETS[presetSel.value].Blocs &&
+        Number(dureeIn.value) === C.PRESETS[presetSel.value].DureeBloc_min &&
+        Number(recupIn.value) === C.PRESETS[presetSel.value].Recup_min &&
+        pctIn.value.replace(/\s+/g,'') === C.PRESETS[presetSel.value].Cible_%VMA.join(',');
+
+      let code;
+      let seance = C.buildSession({
+        Titre: titreIn.value, DateStr: dateIn.value, Blocs: blocsIn.value,
+        DureeBloc_min: dureeIn.value, Recup_min: recupIn.value,
+        CiblePct: pctIn.value, Piste_m: pisteSel.value, Notes: notesIn.value
+      });
+
+      if(isPreset){
+        // Short code for presets
+        const idx = Object.keys(C.PRESETS).indexOf(presetSel.value);
+        code = C.genShortCode(idx);
+        // Students will reconstruct from code locally (no details transferred)
+        codeTypeSpan.textContent = 'code court (présélection)';
+      } else {
+        // Extended code for custom
+        code = C.genExtendedCode();
+        C.saveCustomSession(code, seance);
+        codeTypeSpan.textContent = 'code étendu (séance perso)';
+      }
+
+      codeSpan.textContent = code;
+      sidSpan.textContent = seance.SeanceID;
+
+      // Optional: QR séance with JSON (if tu veux quand même projeter)
+      qrBox.innerHTML = '';
+      if(typeof QRCode!=='undefined'){
+        new QRCode(qrBox,{text: JSON.stringify({unlock:code, seance:seance}), width:220, height:220});
+      }else{
+        qrBox.innerHTML = '<div class="sub">QR lib non dispo — le code suffit: <b>'+code+'</b></div>';
+      }
+      // Keep last on this device (utile si tablette prof == tablette élèves)
+      localStorage.setItem('RC_last_seance', JSON.stringify({unlock:code, seance:seance}));
+    }
+
+    document.getElementById('btnPreset').addEventListener('click', applyPreset);
+    document.getElementById('btnGen').addEventListener('click', genCode);
+    // init
+    applyPreset();
+  });
+  </script>
+</head>
+<body>
+  <header>
+    <h1>RunCycle — Mode Prof</h1>
+    <div class="sub">Séances type <em>ou</em> personnalisées • Code simple (sans scan côté élèves)</div>
+  </header>
+  <main>
+    <section class="grid cols-2">
+      <div class="card">
+        <h2>🗓️ Séance</h2>
+        <div class="grid cols-2">
+          <div>
+            <label>Séance type</label>
+            <select id="preset">
+              <option value="S1">S1 — Test 6’ (VMA)</option>
+              <option value="S2">S2 — 2×6’ @ 90% VMA • r=3’</option>
+              <option value="S3">S3 — 3×4’ (80/90/100%) • r=2’</option>
+              <option value="S4">S4 — 4×3’ projet (90→95%) • r=2’</option>
+              <option value="S5">S5 — Évaluation 4×3’ @ 95% • r=2’</option>
+            </select>
+          </div>
+          <div>
+            <label>Date</label>
+            <input id="sDate" type="date">
+          </div>
+          <div>
+            <label>Titre</label>
+            <input id="sTitre" placeholder="4×3’ r=2’ @ 95% VMA">
+          </div>
+          <div>
+            <label>Longueur de piste (m)</label>
+            <select id="sPiste">
+              <option>200</option><option>250</option><option>300</option><option>333</option><option selected>400</option>
+            </select>
+          </div>
+          <div>
+            <label>Nombre de blocs</label>
+            <input id="sBlocs" type="number" min="1" value="4">
+          </div>
+          <div>
+            <label>Durée d’un bloc (min)</label>
+            <input id="sDuree" type="number" min="1" value="3">
+          </div>
+          <div>
+            <label>Récupération (min)</label>
+            <input id="sRecup" type="number" min="0" value="2">
+          </div>
+          <div>
+            <label>% VMA (scalaire ou liste)</label>
+            <input id="sPct" placeholder="0.95 ou 0.9,0.92,0.94,0.95" value="0.95">
+          </div>
+          <div style="grid-column:1/-1">
+            <label>Consignes</label>
+            <textarea id="sNotes" rows="3" placeholder="Régularité, départ prudent, finish propre"></textarea>
+          </div>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <button class="btn" id="btnPreset">↺ Charger la séance type</button>
+          <button class="btn primary" id="btnGen">🔐 Générer code</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>🔐 Code & (option) QR Séance</h2>
+        <div class="row"><span class="pill">Code : <span id="unlockCode">—</span></span><span class="pill">SeanceID : <span id="sid">—</span></span></div>
+        <div class="sub" style="margin-top:6px">Type : <span id="codeType">—</span></div>
+        <div id="qrSeance" class="qr-box" style="margin-top:10px"></div>
+        <div class="sub">Les élèves n’ont besoin que du <b>code</b>. Le QR séance est facultatif.</div>
+      </div>
+    </section>
+    <div class="center" style="margin-top:16px"><a class="btn" href="./index.html">⬅️ Retour</a></div>
+  </main>
+  <footer>RunCycle — Équipe EPS Lycée Vauban — Luxembourg — JB</footer>
+</body>
+</html>

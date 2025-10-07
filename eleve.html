@@ -1,0 +1,203 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RunCycle — Mode Élèves</title>
+  <link rel="stylesheet" href="./style.css" />
+  <script src="./qr-loader.js" defer></script>
+  <script src="./qr.min.js" defer></script>
+  <script src="./core.js" defer></script>
+  <script defer>
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const C = window.RunCycleCore;
+    // Form refs
+    const pisteSel = document.getElementById('ePiste');
+    const unlockIn = document.getElementById('unlockIn');
+    const seanceBox = document.getElementById('seanceLoaded');
+    const targets = document.getElementById('targets');
+    const tbody = document.getElementById('tbodyBlocs');
+    const resultBox = document.getElementById('qrResult');
+
+    let currentSeance = null;
+
+    function loadFromCode(){
+      const code = (unlockIn.value||'').trim().toUpperCase();
+      if(!code){ alert('Entrez le code donné par le prof'); return; }
+      const s = C.resolveByCode(code, {Piste_m: Number(pisteSel.value||400)});
+      if(!s){
+        // Try extended code stored locally (same device use-case)
+        const last = localStorage.getItem('RC_last_seance');
+        if(last){
+          const obj = JSON.parse(last);
+          if(obj.unlock===code){ currentSeance = obj.seance; renderSeance(); return; }
+        }
+        alert('Code inconnu sur cet appareil. Utilisez un code de présélection (4 caractères) ou demandez au prof de générer un code étendu sur cette tablette.');
+        return;
+      }
+      currentSeance = s;
+      renderSeance();
+    }
+
+    function renderSeance(){
+      const s = currentSeance; if(!s) return;
+      seanceBox.innerHTML = '<div class="row"><span class="pill">'+s.Titre+'</span><span class="pill">Blocs: '+s.Blocs+' • '+s.DureeBloc_min+"' r="+s.Recup_min+"'</span><span class="pill">Piste: "+(s.Piste_m||pisteSel.value)+' m</span></div><div class="sub" style="margin-top:6px">Consignes : '+(s.Consignes||'')+'</div>';
+      seanceBox.classList.remove('hidden');
+      buildBlocTable();
+    }
+
+    function buildBlocTable(){
+      const s = currentSeance; if(!s) return;
+      tbody.innerHTML='';
+      for(let i=1;i<=s.Blocs;i++){
+        const tr = document.createElement('tr');
+        tr.innerHTML = '<td>'+i+'</td>'+
+          '<td><input type="number" min="0" step="1" id="a_m_'+i+'" placeholder="m"></td>'+
+          '<td><input type="number" min="0" max="10" step="1" id="a_r_'+i+'" placeholder="RPE"></td>'+
+          '<td><input type="number" min="0" step="1" id="b_m_'+i+'" placeholder="m"></td>'+
+          '<td><input type="number" min="0" max="10" step="1" id="b_r_'+i+'" placeholder="RPE"></td>';
+        tbody.appendChild(tr);
+      }
+      updateTargets();
+      document.getElementById('saisieBlocs').classList.remove('hidden');
+    }
+
+    function updateTargets(){
+      const s = currentSeance; if(!s) return;
+      const aVMA = Number(document.getElementById('aVMA').value||0);
+      const bVMA = Number(document.getElementById('bVMA').value||0);
+      const pct = Array.isArray(s['Cible_%VMA'])? s['Cible_%VMA'] : Array(s.Blocs).fill(Number(s['Cible_%VMA']||0));
+      const cA = aVMA? pct.map(p=> Math.round(C.mPerMin(aVMA*p)*s.DureeBloc_min)) : [];
+      const cB = bVMA? pct.map(p=> Math.round(C.mPerMin(bVMA*p)*s.DureeBloc_min)) : [];
+      targets.innerHTML = (aVMA||bVMA)? 'Cibles (m/bloc) — A: <b>'+(cA.join(' • ')||'—')+'</b> | B: <b>'+(cB.join(' • ')||'—')+'</b>' : 'Renseignez la VMA pour voir vos cibles.';
+    }
+
+    function collectResults(){
+      const s=currentSeance; const n=s.Blocs;
+      const A={ Nom:(document.getElementById('aNom').value||'').toUpperCase(), Prénom:document.getElementById('aPrenom').value||'', Classe:document.getElementById('aClasse').value||'', Sexe:document.getElementById('aSexe').value||'', VMA:Number(document.getElementById('aVMA').value||0) };
+      const B={ Nom:(document.getElementById('bNom').value||'').toUpperCase(), Prénom:document.getElementById('bPrenom').value||'', Classe:document.getElementById('bClasse').value||'', Sexe:document.getElementById('bSexe').value||'', VMA:Number(document.getElementById('bVMA').value||0) };
+      const am=[], ar=[], bm=[], br=[]; for(let i=1;i<=n;i++){ am.push(Number(document.getElementById(`a_m_${i}`).value||0)); ar.push(Number(document.getElementById(`a_r_${i}`).value||0)); bm.push(Number(document.getElementById(`b_m_${i}`).value||0)); br.push(Number(document.getElementById(`b_r_${i}`).value||0)); }
+      return {s,A,B,am,ar,bm,br};
+    }
+
+    function genQR(mode){
+      if(typeof QRCode==='undefined'){ alert('Lib QR non dispo'); return; }
+      if(!currentSeance){ alert('Séance non chargée'); return; }
+      const {s,A,B,am,ar,bm,br} = collectResults();
+      const totalMin = s.Blocs * s.DureeBloc_min;
+      const vA = C.kmhFromMeters(am.reduce((a,b)=>a+b,0), totalMin);
+      const vB = C.kmhFromMeters(bm.reduce((a,b)=>a+b,0), totalMin);
+      const pct = Array.isArray(s['Cible_%VMA'])? s['Cible_%VMA'] : Array(s.Blocs).fill(Number(s['Cible_%VMA']||0));
+      const cibleA = A.VMA? (A.VMA * C.mean(pct)) : 0;
+      const cibleB = B.VMA? (B.VMA * C.mean(pct)) : 0;
+      const ecA = +(vA - cibleA).toFixed(2);
+      const ecB = +(vB - cibleB).toFixed(2);
+      resultBox.innerHTML = '';
+      if(mode==='duo'){
+        const payload = { v:1, format:'duo', SeanceID:s.SeanceID, Seance:s.Titre, Piste_m:s.Piste_m||Number(pisteSel.value||400),
+          eleves:[
+            { Nom:A.Nom, Prénom:A.Prénom, Classe:A.Classe, Sexe:A.Sexe, VMA:A.VMA, Blocs_m:am, RPE:ar, Vitesse_moy_km_h:+vA.toFixed(2), Ecart_km_h:ecA },
+            { Nom:B.Nom, Prénom:B.Prénom, Classe:B.Classe, Sexe:B.Sexe, VMA:B.VMA, Blocs_m:bm, RPE:br, Vitesse_moy_km_h:+vB.toFixed(2), Ecart_km_h:ecB }
+          ]};
+        new QRCode(resultBox,{text:JSON.stringify(payload), width:220, height:220});
+      }else if(mode==='soloA'){
+        const payload = { v:1, format:'solo', SeanceID:s.SeanceID, Seance:s.Titre, Piste_m:s.Piste_m||Number(pisteSel.value||400),
+          Nom:A.Nom, Prénom:A.Prénom, Classe:A.Classe, Sexe:A.Sexe, VMA:A.VMA, Blocs_m:am, RPE:ar, Vitesse_moy_km_h:+vA.toFixed(2), Ecart_km_h:ecA };
+        new QRCode(resultBox,{text:JSON.stringify(payload), width:220, height:220});
+      }else if(mode==='soloB'){
+        const payload = { v:1, format:'solo', SeanceID:s.SeanceID, Seance:s.Titre, Piste_m:s.Piste_m||Number(pisteSel.value||400),
+          Nom:B.Nom, Prénom:B.Prénom, Classe:B.Classe, Sexe:B.Sexe, VMA:B.VMA, Blocs_m:bm, RPE:br, Vitesse_moy_km_h:+vB.toFixed(2), Ecart_km_h:ecB };
+        new QRCode(resultBox,{text:JSON.stringify(payload), width:220, height:220});
+      }
+    }
+
+    document.getElementById('btnLoad').addEventListener('click', loadFromCode);
+    document.getElementById('btnQRDuo').addEventListener('click', ()=>genQR('duo'));
+    document.getElementById('btnQRA').addEventListener('click', ()=>genQR('soloA'));
+    document.getElementById('btnQRB').addEventListener('click', ()=>genQR('soloB'));
+
+    // Update targets on VMA change
+    ['aVMA','bVMA'].forEach(id=>{
+      document.getElementById(id).addEventListener('input', ()=>{
+        if(currentSeance){ // recompute targets
+          const s=currentSeance; const pct = Array.isArray(s['Cible_%VMA'])? s['Cible_%VMA'] : Array(s.Blocs).fill(Number(s['Cible_%VMA']||0));
+          const aVMA = Number(document.getElementById('aVMA').value||0);
+          const bVMA = Number(document.getElementById('bVMA').value||0);
+          const cA = aVMA? pct.map(p=> Math.round(C.mPerMin(aVMA*p)*s.DureeBloc_min)) : [];
+          const cB = bVMA? pct.map(p=> Math.round(C.mPerMin(bVMA*p)*s.DureeBloc_min)) : [];
+          targets.innerHTML = (aVMA||bVMA)? 'Cibles (m/bloc) — A: <b>'+(cA.join(' • ')||'—')+'</b> | B: <b>'+(cB.join(' • ')||'—')+'</b>' : 'Renseignez la VMA pour voir vos cibles.';
+        }
+      });
+    });
+
+  });
+  </script>
+</head>
+<body>
+  <header>
+    <h1>RunCycle — Mode Élèves (Binôme)</h1>
+    <div class="sub">Profil A/B → Code (sans scan) → Saisie blocs + RPE → QR DUO pour ScanProf</div>
+  </header>
+  <main>
+    <section class="grid cols-2">
+      <div class="card frameA">
+        <h2>👤 Élève A</h2>
+        <div class="grid cols-2">
+          <div><label>Nom</label><input id="aNom" placeholder="DUPONT"></div>
+          <div><label>Prénom</label><input id="aPrenom" placeholder="Alice"></div>
+          <div><label>Classe</label><input id="aClasse" placeholder="4C"></div>
+          <div><label>Sexe</label><select id="aSexe"><option>F</option><option>M</option></select></div>
+          <div><label>VMA (km/h)</label><input id="aVMA" type="number" step="0.1"></div>
+        </div>
+      </div>
+      <div class="card frameB">
+        <h2>👤 Élève B</h2>
+        <div class="grid cols-2">
+          <div><label>Nom</label><input id="bNom" placeholder="MARTIN"></div>
+          <div><label>Prénom</label><input id="bPrenom" placeholder="Noah"></div>
+          <div><label>Classe</label><input id="bClasse" placeholder="4C"></div>
+          <div><label>Sexe</label><select id="bSexe"><option>F</option><option selected>M</option></select></div>
+          <div><label>VMA (km/h)</label><input id="bVMA" type="number" step="0.1"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>🔓 Charger la séance</h2>
+      <div class="grid cols-2">
+        <div>
+          <label>Code de déverrouillage</label>
+          <input id="unlockIn" placeholder="ex: 482K (présélection) ou CODEPERSO">
+        </div>
+        <div>
+          <label>Longueur de piste (m)</label>
+          <select id="ePiste"><option>200</option><option>250</option><option>300</option><option>333</option><option selected>400</option></select>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn primary" id="btnLoad">✅ Utiliser le code</button>
+        <a class="btn" href="./index.html">⬅️ Accueil</a>
+      </div>
+      <div id="seanceLoaded" class="card hidden" style="margin-top:12px"></div>
+    </section>
+
+    <section id="saisieBlocs" class="card hidden">
+      <h2>📝 Saisie des blocs & RPE</h2>
+      <div id="targets" class="sub" style="margin-bottom:8px"></div>
+      <table>
+        <thead><tr><th>Bloc</th><th>Distance A (m)</th><th>RPE A (0–10)</th><th>Distance B (m)</th><th>RPE B (0–10)</th></tr></thead>
+        <tbody id="tbodyBlocs"></tbody>
+      </table>
+      <div class="row" style="margin-top:10px">
+        <button class="btn green" id="btnQRDuo">🔳 QR DUO (2 élèves)</button>
+        <button class="btn" id="btnQRA">QR A</button>
+        <button class="btn" id="btnQRB">QR B</button>
+      </div>
+      <div id="qrResult" class="qr-box" style="margin-top:10px"></div>
+    </section>
+    <div class="center" style="margin-top:16px"><a class="btn" href="./index.html">⬅️ Retour</a></div>
+  </main>
+  <footer>RunCycle — Équipe EPS Lycée Vauban — Luxembourg — JB</footer>
+</body>
+</html>
