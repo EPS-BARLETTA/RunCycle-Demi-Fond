@@ -85,10 +85,48 @@
     document.getElementById('btnGen').addEventListener('click', genCode);
     // init
     applyPreset();
+
+    // --- Gate access '57'
+    const gate = document.getElementById('gate');
+    const gateBtn = document.getElementById('gateBtn');
+    const gateCode = document.getElementById('gateCode');
+    const gateErr = document.getElementById('gateErr');
+    function openGate(){
+      if((gateCode.value||'').trim() === '57'){
+        gate.style.display='none';
+        // small focus
+        presetSel.focus();
+      }else{
+        gateErr.style.display='block';
+      }
+    }
+    gateBtn.addEventListener('click', openGate);
+    gateCode.addEventListener('keydown', (e)=>{ if(e.key==='Enter') openGate(); });
+    // --- Auto generate on preset change for quick flow
+    presetSel.addEventListener('change', ()=>{ applyPreset(); genCode(); });
+
   });
   </script>
 </head>
 <body>
+  
+<style>
+  .gate{position:fixed;inset:0;background:rgba(15,23,42,.96);display:grid;place-items:center;z-index:9999}
+  .gate-card{background:#0b1220;border:1px solid #253247;border-radius:16px;padding:20px;max-width:360px;width:92%}
+  .gate h2{margin-top:0}
+</style>
+
+  <div id="gate" class="gate">
+    <div class="gate-card">
+      <h2>🔒 Accès Prof</h2>
+      <p class="sub">Entrez le code pour ouvrir le mode Prof.</p>
+      <div class="row"><input id="gateCode" placeholder="Code (ex: 57)" style="flex:1"><button class="btn primary" id="gateBtn">Ouvrir</button></div>
+      <div id="gateErr" class="sub" style="color:#ef4444;margin-top:8px;display:none">Code incorrect</div>
+      <div class="sub" style="margin-top:8px">Astuce : vous pouvez revenir à l’accueil si besoin.</div>
+      <div class="row" style="margin-top:10px"><a class="btn" href="./index.html">⬅️ Accueil</a></div>
+    </div>
+  </div>
+
   <header>
     <h1>RunCycle — Mode Prof</h1>
     <div class="sub">Séances type <em>ou</em> personnalisées • Code simple (sans scan côté élèves)</div>
