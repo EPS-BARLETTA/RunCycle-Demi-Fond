@@ -118,9 +118,51 @@ function setPhase(newPhase, seconds){
   tone(120, ph==='Effort'?880:520);
 }
 
+
 function tick(){
   if(!running) return;
-  if(rem>0){ rem--; document.getElementById('clock').textContent = fmt(rem); return; }
+  if(rem>0){
+    rem--;
+    document.getElementById('clock').textContent = fmt(rem);
+    return;
+  }
+  // rem === 0 -> phase switch
+  if(ph==='Effort'){
+    // Fin d'un effort
+    if(b >= S.B){
+      // Dernier effort terminé -> fin séance
+      stopAll(true);
+      return;
+    }
+    // Pas dernier effort
+    if(S.R > 0){
+      setPhase('Récup', S.R*60);
+    } else {
+      // Enchaîne directement l'effort suivant (sans récup)
+      b++;
+      document.getElementById('i').textContent = b;
+      setPhase('Effort', S.Db*60);
+    }
+    return;
+  }
+
+  if(ph==='Prêt'){
+    // Démarrage de la séance -> Effort #1
+    b = 1;
+    document.getElementById('i').textContent = b;
+    setPhase('Effort', S.Db*60);
+    return;
+  }
+
+  if(ph==='Récup'){
+    // Fin d'une récup -> Effort suivant
+    b++;
+    document.getElementById('i').textContent = b;
+    setPhase('Effort', S.Db*60);
+    return;
+  }
+}
+
   // rem == 0 → bascule
   if(ph==='Prêt' || ph==='Récup'){
     if(b>=S.B){ // FIN SÉANCE
