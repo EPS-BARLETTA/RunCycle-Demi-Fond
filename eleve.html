@@ -17,7 +17,7 @@ table{width:100%;border-collapse:collapse}th,td{border:1px solid var(--line);pad
 .finish{padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#0a1a36;margin-top:8px;display:none}
 </style>
 <body>
-<header><h1>RunCycle — Élèves <span class="badge">v2</span></h1><div style="color:#94a3b8">Code → VMA + piste → Cibles → Chrono → Distances + RPE → QR</div></header>
+<header><h1>RunCycle — Élèves</h1><div style="color:#94a3b8">Code → VMA + piste → Cibles → Chrono → Distances + RPE → QR</div></header>
 <main>
   <div class="card">
     <h2>🔓 Charger la séance</h2>
@@ -52,7 +52,6 @@ table{width:100%;border-collapse:collapse}th,td{border:1px solid var(--line);pad
       <button class="btn" id="bPause">⏸️ Pause</button>
       <button class="btn" id="bReset">↺ Reset</button>
       <span class="badge">Bloc <span id="i">0</span>/<span id="n">0</span></span>
-      <label class="badge" style="cursor:pointer"><input type="checkbox" id="beep" style="transform:scale(1.1);margin-right:8px"> Bip phases</label>
     </div>
     <div id="finished" class="finish">✅ Séance terminée — bravo !</div>
   </div>
@@ -76,16 +75,7 @@ const PRESETS={"101A":{T:"Test 6' (VMA)",B:1,Db:6,R:0,P:[]},
 "303C":{T:"3×4' 80/90/100% (r=2')",B:3,Db:4,R:2,P:[0.8,0.9,1.0]},
 "404D":{T:"4×3' 90→95% (r=2')",B:4,Db:3,R:2,P:[0.9,0.92,0.94,0.95]},
 "505E":{T:"Éval 4×3' @95% (r=2')",B:4,Db:3,R:2,P:[0.95,0.95,0.95,0.95]}};
-let S=null, timer=null, rem=0, ph='Prêt', b=0, running=false, ctx=null, osc=null;
-
-function tone(ms=200, freq=880){
-  try{
-    if(!document.getElementById('beep').checked) return;
-    ctx = ctx || new (window.AudioContext||window.webkitAudioContext)();
-    osc = ctx.createOscillator(); const gn=ctx.createGain(); osc.frequency.value=freq; gn.gain.value=0.05;
-    osc.connect(gn); gn.connect(ctx.destination); osc.start(); setTimeout(()=>{osc.stop();}, ms);
-  }catch(e){}
-}
+let S=null, running=false, rem=0, ph='Prêt', b=0;
 
 function load(){
   const c=(document.getElementById('code').value||'').trim().toUpperCase(); if(!PRESETS[c]){alert('Code inconnu : 101A..505E'); return;}
@@ -94,119 +84,32 @@ function load(){
   document.getElementById('desc').textContent=p.T+' • blocs: '+p.B+' • '+p.Db+"' r="+p.R+"' • piste "+piste+' m'; document.getElementById('desc').style.display='inline-block';
   document.getElementById('profiles').style.display='grid'; document.getElementById('work').style.display='block'; document.getElementById('saisie').style.display='block';
   document.getElementById('n').textContent=S.B; build(); targets(); reset();
-  // Bind buttons once session is loaded
-  document.getElementById('bStart').onclick=start;
-  document.getElementById('bPause').onclick=pause;
-  document.getElementById('bReset').onclick=reset;
+  document.getElementById('bStart').onclick=start; document.getElementById('bPause').onclick=pause; document.getElementById('bReset').onclick=reset;
 }
-
-function build(){
-  const tb=document.getElementById('tb'); tb.innerHTML=''; for(let i=1;i<=S.B;i++){tb.insertAdjacentHTML('beforeend','<tr><td>'+i+'</td><td><input id=a_m_'+i+' type=number min=0></td><td><input id=a_r_'+i+' type=number min=0 max=10></td><td><input id=b_m_'+i+' type=number min=0></td><td><input id=b_r_'+i+' type=number min=0 max=10></td></tr>');}
-}
-
+function build(){ const tb=document.getElementById('tb'); tb.innerHTML=''; for(let i=1;i<=S.B;i++){tb.insertAdjacentHTML('beforeend','<tr><td>'+i+'</td><td><input id=a_m_'+i+' type=number min=0></td><td><input id=a_r_'+i+' type=number min=0 max=10></td><td><input id=b_m_'+i+' type=number min=0></td><td><input id=b_r_'+i+' type=number min=0 max=10></td></tr>');}}
 function mpm(k){return k*1000/60}
-function targets(){
-  const a=+document.getElementById('aVMA').value||0, b=+document.getElementById('bVMA').value||0, pct=S.P.length?S.P:Array(S.B).fill(1);
+function targets(){ const a=+document.getElementById('aVMA').value||0, b=+document.getElementById('bVMA').value||0, pct=S.P.length?S.P:Array(S.B).fill(1);
   const dA=a?pct.map(p=>Math.round(mpm(a*p)*S.Db)):[], dB=b?pct.map(p=>Math.round(mpm(b*p)*S.Db)):[];
-  document.getElementById('tg').innerHTML=(a||b)?('Cibles — A: <b>'+ (dA.join(' • ')||'—') + '</b> | B: <b>' + (dB.join(' • ')||'—') + '</b>'):'Renseignez les VMA…';
-}
-
+  document.getElementById('tg').innerHTML=(a||b)?('Cibles — A: <b>'+ (dA.join(' • ')||'—') + '</b> | B: <b>' + (dB.join(' • ')||'—') + '</b>'):'Renseignez les VMA…';}
 function fmt(s){const m=Math.floor(s/60),x=s%60; return String(m).padStart(2,'0')+':'+String(x).padStart(2,'0'); }
-
-function setPhase(newPhase, seconds){
-  ph = newPhase; rem = seconds; document.getElementById('phase').textContent = ph; document.getElementById('clock').textContent = fmt(rem);
-  tone(120, ph==='Effort'?880:520);
-}
-
-
+function setPhase(p,sec){ph=p;rem=sec;document.getElementById('phase').textContent=p;document.getElementById('clock').textContent=fmt(rem);}
 function tick(){
   if(!running) return;
-  if(rem>0){
-    rem--;
-    document.getElementById('clock').textContent = fmt(rem);
-    return;
-  }
-  // rem === 0 -> phase switch
+  if(rem>0){ rem--; document.getElementById('clock').textContent=fmt(rem); return; }
   if(ph==='Effort'){
-    // Fin d'un effort
-    if(b >= S.B){
-      // Dernier effort terminé -> fin séance
-      stopAll(true);
-      return;
-    }
-    // Pas dernier effort
-    if(S.R > 0){
-      setPhase('Récup', S.R*60);
-    } else {
-      // Enchaîne directement l'effort suivant (sans récup)
-      b++;
-      document.getElementById('i').textContent = b;
-      setPhase('Effort', S.Db*60);
-    }
-    return;
-  }
-
-  if(ph==='Prêt'){
-    // Démarrage de la séance -> Effort #1
-    b = 1;
-    document.getElementById('i').textContent = b;
-    setPhase('Effort', S.Db*60);
-    return;
-  }
-
-  if(ph==='Récup'){
-    // Fin d'une récup -> Effort suivant
-    b++;
-    document.getElementById('i').textContent = b;
-    setPhase('Effort', S.Db*60);
-    return;
-  }
-}
-
-  // rem == 0 → bascule
-  if(ph==='Prêt' || ph==='Récup'){
-    if(b>=S.B){ // FIN SÉANCE
-      stopAll(true); return;
-    }
-    b++; document.getElementById('i').textContent=b;
-    setPhase('Effort', S.Db*60);
-  }else{ // Effort → Récup ou Effort suivant si R=0
+    if(b>=S.B){ stopAll(true); return; }
     if(S.R>0){ setPhase('Récup', S.R*60); }
-    else{
-      if(b>=S.B){ stopAll(true); return; }
-      b++; document.getElementById('i').textContent=b;
-      setPhase('Effort', S.Db*60);
-    }
+    else { b++; document.getElementById('i').textContent=b; setPhase('Effort', S.Db*60); }
+    return;
   }
+  if(ph==='Prêt'){ b=1; document.getElementById('i').textContent=b; setPhase('Effort', S.Db*60); return; }
+  if(ph==='Récup'){ b++; document.getElementById('i').textContent=b; setPhase('Effort', S.Db*60); return; }
 }
-
-function start(){
-  if(!S || running) return;
-  running = true; document.getElementById('finished').style.display='none';
-  if(ph==='Prêt'){ b=0; document.getElementById('i').textContent=b; }
-  if(rem<=0){ // initialise première étape
-    if(ph==='Prêt'){ setPhase('Effort', S.Db*60); }
-    else if(ph==='Récup'){ setPhase('Effort', S.Db*60); }
-    else{ setPhase('Effort', rem||S.Db*60); }
-  }
-  if(window._timer) clearInterval(window._timer);
-  window._timer = setInterval(tick, 1000);
-}
-
-function pause(){ running=false; if(window._timer) clearInterval(window._timer); }
-
-function stopAll(finished=false){
-  running=false; if(window._timer) clearInterval(window._timer);
-  document.getElementById('phase').textContent = finished ? 'Terminé' : 'Prêt';
-  document.getElementById('clock').textContent = '00:00';
-  if(finished){ document.getElementById('finished').style.display='block'; tone(300, 1000); }
-}
-
-function reset(){
-  stopAll(false); ph='Prêt'; b=0; rem=0; document.getElementById('i').textContent='0'; document.getElementById('finished').style.display='none';
-}
-function kmh(m, min){ return (m/1000)/(min/60) }
-function mean(a){ return a.reduce((x,y)=>x+y,0)/a.length }
+function start(){ if(!S||running) return; running=true; document.getElementById('finished').style.display='none'; if(rem<=0){ if(ph==='Prêt'){ setPhase('Effort', S.Db*60); } } if(window._t) clearInterval(window._t); window._t=setInterval(tick,1000); }
+function pause(){ running=false; if(window._t) clearInterval(window._t); }
+function stopAll(f){ running=false; if(window._t) clearInterval(window._t); document.getElementById('phase').textContent=f?'Terminé':'Prêt'; document.getElementById('clock').textContent='00:00'; if(f) document.getElementById('finished').style.display='block'; }
+function reset(){ stopAll(false); ph='Prêt'; b=0; rem=0; document.getElementById('i').textContent='0'; document.getElementById('finished').style.display='none';}
+function kmh(m, min){ return (m/1000)/(min/60) } function mean(a){ return a.reduce((x,y)=>x+y,0)/a.length }
 function qr(mode){
   const n=S.B, a={Nom:(document.getElementById('aNom').value||'').toUpperCase(),Prénom:document.getElementById('aPre').value||'',Classe:document.getElementById('aCla').value||'',Sexe:document.getElementById('aSex').value||'',VMA:+document.getElementById('aVMA').value||0},
         b={Nom:(document.getElementById('bNom').value||'').toUpperCase(),Prénom:document.getElementById('bPre').value||'',Classe:document.getElementById('bCla').value||'',Sexe:document.getElementById('bSex').value||'',VMA:+document.getElementById('bVMA').value||0};

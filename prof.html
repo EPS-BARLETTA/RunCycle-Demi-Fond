@@ -1,5 +1,5 @@
 <!DOCTYPE html><html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>RunCycle — Prof (fix code banner)</title>
+<title>RunCycle — Prof</title>
 <style>
 :root{--bg:#0b1020;--ink:#e6e9ef;--muted:#9aa4b2;--line:#222b3c;--panel:#0f172a;--primary:#3b82f6}
 *{box-sizing:border-box}html,body{margin:0}
@@ -35,22 +35,15 @@ input,select,textarea{width:100%;padding:12px;border-radius:12px;border:1px soli
           var v=(document.getElementById('gateCode').value||'').trim();
           if(v==='57'){
             document.getElementById('gate').style.display='none';
-            // Génération immédiate à l'ouverture
-            setTimeout(function(){
-              try{ applyPreset(); gen(); }catch(e){}
-            }, 0);
-          } else {
-            document.getElementById('err').style.display='block';
-          }
+            setTimeout(function(){ try{ applyPreset(); gen(); }catch(e){} }, 0);
+          } else { document.getElementById('err').style.display='block'; }
         }
         document.getElementById('btnGate').addEventListener('click', openGate);
         document.getElementById('gateCode').addEventListener('keydown', function(ev){ if(ev.key==='Enter'){ openGate(); }});
         var u=location.search+location.hash;
         if(u.includes('p=57')||u.includes('#57')){
           document.getElementById('gate').style.display='none';
-          setTimeout(function(){
-            try{ applyPreset(); gen(); }catch(e){}
-          }, 0);
+          setTimeout(function(){ try{ applyPreset(); gen(); }catch(e){} }, 0);
         }
       })();
     </script>
@@ -113,7 +106,6 @@ const PRESETS={
  S5:{Titre:"Éval 4×3' @95% (r=2')",Blocs:4,DureeBloc_min:3,Recup_min:2,Cible_%VMA:[0.95,0.95,0.95,0.95]}
 };
 const FIX = {S1:"101A",S2:"202B",S3:"303C",S4:"404D",S5:"505E"};
-
 function warn(msg){ const w=document.getElementById('warn'); w.textContent=msg; w.style.display='block'; }
 function clearWarn(){ const w=document.getElementById('warn'); w.style.display='none';}
 
@@ -127,7 +119,6 @@ function applyPreset(){
   D.getElementById('sRecup').value=p.Recup_min;
   D.getElementById('sPct').value=p.Cible_%VMA.join(',');
 }
-
 function sameAsPreset(){
   const D=document, p=PRESETS[D.getElementById('preset').value];
   return D.getElementById('sTitre').value===p.Titre &&
@@ -136,7 +127,6 @@ function sameAsPreset(){
          +D.getElementById('sRecup').value===p.Recup_min &&
          (D.getElementById('sPct').value||'').replace(/\s+/g,'')===p.Cible_%VMA.join(',');
 }
-
 function build(){
   const D=document; return {
     Date:D.getElementById('sDate').value||today(),
@@ -149,7 +139,6 @@ function build(){
     Consignes:D.getElementById('sNotes').value||""
   };
 }
-
 function gen(){
   clearWarn();
   try{
@@ -159,30 +148,22 @@ function gen(){
     else if(sameAsPreset()){ code = FIX[document.getElementById('preset').value] || '000X'; }
     else { code = Math.random().toString(36).slice(2,10).toUpperCase(); localStorage.setItem('RC_custom_'+code, JSON.stringify(s)); }
     document.getElementById('code').textContent=code||'—';
-    document.getElementById('sid').textContent = s.Date + '_' + Math.random().toString(36).slice(2,6).toUpperCase();
+    document.getElementById('sid').textContent = (s.Date + '_' + Math.random().toString(36).slice(2,6).toUpperCase());
     if(!code) warn("Le code n'a pas été généré.");
-  }catch(e){
-    warn("Erreur generation code: "+(e&&e.message?e.message:e));
-  }
+  }catch(e){ warn("Erreur génération code: "+(e&&e.message?e.message:e)); }
 }
-
 function tile(k){ document.getElementById('preset').value=k; applyPreset(); gen(); }
 
 document.addEventListener('DOMContentLoaded', function(){
-  // Boutons
   document.getElementById('btnLoad').addEventListener('click', function(){ applyPreset(); gen(); });
   document.getElementById('btnGen').addEventListener('click', gen);
   document.getElementById('btnCopy').addEventListener('click', function(){
     const c=document.getElementById('code').textContent||''; if(navigator.clipboard){ navigator.clipboard.writeText(c); }
   });
   document.getElementById('btnForce').addEventListener('click', gen);
-  // Click sur chaque tuile
   document.querySelectorAll('.preset').forEach(x=>x.addEventListener('click', function(){ tile(this.dataset.k); }));
-  // Pré-génération si gate déjà ouvert via URL
   var u=location.search+location.hash;
-  if(u.includes('p=57')||u.includes('#57')){
-    setTimeout(function(){ try{ applyPreset(); gen(); }catch(e){} }, 0);
-  }
+  if(u.includes('p=57')||u.includes('#57')){ setTimeout(function(){ try{ applyPreset(); gen(); }catch(e){} }, 0); }
 });
 </script>
 </body></html>
