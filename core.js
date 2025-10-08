@@ -28,5 +28,3 @@ export function fmtTime(sec){
   return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
 }
 export function clamp(n,min,max){ return Math.min(max, Math.max(min,n)); }
-
-// QR code: lightweight generator via canvas using QRCode.js (embedded)

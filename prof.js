@@ -1,8 +1,7 @@
 import { $, base64url, sha256 } from './core.js';
 
-// ⚠️ Change le code prof ici (hash SHA‑256 du mot de passe).
-// Par défaut, le code est: vauban
-export const PROF_HASH = 'b8e2f6e3f9e6b1b6f1f36d7cfe0f3b6f8c5a4a2f7f5a9f6b2a7e6d2f3c9a1e2b'; // placeholder simple (non réel)
+// Code prof par défaut = 'vauban'
+export const PROF_HASH = 'a38681899afd9e39610fc210b20e310137176e83d5fd32954dff21b15876713c';
 
 async function checkGate() {
   const code = $('#profCode').value.trim();
@@ -18,6 +17,7 @@ async function checkGate() {
 }
 
 $('#btnEnter').addEventListener('click', checkGate);
+$('#profCode').addEventListener('keydown', (e)=>{ if(e.key==='Enter') checkGate(); });
 
 // Modèles (6)
 const templates = [
@@ -32,7 +32,7 @@ const templates = [
 function renderTemplates(){
   const box = $('#templates');
   box.innerHTML = '';
-  templates.forEach((t,idx)=>{
+  templates.forEach((t)=>{
     const div = document.createElement('div');
     div.className='cardItem';
     div.innerHTML = `<b>${t.name}</b><br><span class="badge">${t.type}</span>`;
@@ -63,13 +63,14 @@ function genCode(){
     issuedAt: new Date().toISOString()
   };
   const code = base64url.encode(cfg);
+  try{ localStorage.setItem('lastSessionCode', code); }catch(e){}
   const link = `eleve.html?code=${code}`;
   $('#codeBox').textContent = code;
   $('#linkEleve').href = link;
-  // QR du lien direct
   const qrNode = document.getElementById('qr');
   qrNode.innerHTML='';
-  new QRCode(qrNode,{text: location.origin+location.pathname.replace(/prof\.html$/,'')+link, width:196, height:196});
+  const absolute = location.origin + location.pathname.replace(/prof\.html$/,'') + link;
+  new QRCode(qrNode,{text: absolute, width:196, height:196});
 }
 
 $('#btnGen').addEventListener('click', genCode);

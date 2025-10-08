@@ -1,7 +1,7 @@
 import { $, base64url, fmtTime, nowISO } from './core.js';
 
 const params = new URLSearchParams(location.search);
-if(params.get('code')) $('#code').value = params.get('code');
+if(params.get('code')){ $('#code').value = params.get('code'); setTimeout(()=>$('#btnLoad').click(), 0); }
 
 let cfg=null;
 let state={
@@ -12,7 +12,10 @@ let state={
 };
 
 function load(){
-  const code = $('#code').value.trim();
+  let code = $('#code').value.trim();
+  if(!code){
+    try{ const last = localStorage.getItem('lastSessionCode'); if(last){ code = last; $('#code').value = last; } }catch(e){}
+  }
   if(!code) return alert('Code manquant');
   try{
     cfg = base64url.decode(code);
@@ -21,7 +24,7 @@ function load(){
 
   $('#sess').classList.remove('hidden');
   $('#cfg').innerHTML = `<div class="cardItem">
-    <b>Type</b> : ${cfg.type} · <b>Rép.</b> ${cfg.reps||1} · <b>Trav</b> ${cfg.work||0}s · <b>Récup</b> ${cfg.rest||0}s
+    <b>Type</b> : ${cfg.type} · <b>Rép.</b> ${cfg.reps||1} · <b>Trav</b> ${cfg.work||0}s · <b>Récup</b> ${cfg.rest||0}s
     ${cfg.type==='mangeplots' ? ` · <b>Fenêtre</b> ${cfg.window}s` : ''}
     ${cfg.note ? `<br><i>${cfg.note}</i>` : ''}
   </div>`;
@@ -43,7 +46,6 @@ let timer=null;
 function tickF(){
   state.chrono++;
   $('#chronoF').textContent = fmtTime(state.chrono);
-  // phase logic
   const w = cfg.work||30, r = cfg.rest||30;
   const cycle = w + r;
   const t = state.chrono % cycle;
@@ -72,6 +74,10 @@ function tickM(){
   state.chronoM++;
   $('#chronoM').textContent = fmtTime(state.chronoM);
   if(state.chronoM>=state.win){ pauseM(); }
+  // vitesse live
+  const distance_m = state.plots * 12.5;
+  const speed = (distance_m/1000)/(Math.max(1,state.chronoM)/3600);
+  $('#speedM').textContent = (Math.round(speed*10)/10).toFixed(1) + ' km/h';
 }
 function startM(){ state.runningM=true; if(timerM) return; timerM=setInterval(tickM,1000); }
 function pauseM(){ state.runningM=false; clearInterval(timerM); timerM=null; }
