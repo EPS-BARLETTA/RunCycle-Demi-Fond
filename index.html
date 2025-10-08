@@ -1,47 +1,38 @@
-<!DOCTYPE html><html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<!DOCTYPE html><html lang="fr"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>RunCycle — Accueil</title>
 <style>
 :root{--bg:#0b1020;--ink:#e6e9ef;--muted:#9aa4b2;--line:#222b3c;--panel:#0f172a;--primary:#3b82f6;--ok:#22c55e}
 *{box-sizing:border-box}html,body{margin:0}
-body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:radial-gradient(1200px 800px at 50% -10%,#13203e,#0b1020);color:var(--ink)}
+body{font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:#0b1020;color:var(--ink)}
 header,footer{border-block:1px solid var(--line);padding:24px;text-align:center}
-h1{margin:0;font-size:clamp(28px,4vw,40px)}
 main{max-width:960px;margin:0 auto;padding:24px}
 .hero{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.card{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
-.btn{display:inline-flex;align-items:center;gap:10px;padding:14px 18px;border-radius:14px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;text-decoration:none;font-weight:600}
-.btn.primary{background:var(--primary);color:white}
-.btn.ok{background:var(--ok);color:white}
-ul{margin:10px 0 0 20px;color:var(--muted)}
-.brand{font-weight:800;letter-spacing:.3px}
+.card{background:#0f172a;border:1px solid var(--line);border-radius:14px;padding:20px}
+.btn{display:inline-block;padding:12px 16px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);text-decoration:none;font-weight:700}
+.btn.primary{background:var(--primary);color:#fff}
+.btn.ok{background:var(--ok);color:#fff}
+ul{color:var(--muted)}
 </style>
 <body>
 <header>
-  <h1><span class="brand">RunCycle</span> — Demi-fond</h1>
-  <div style="color:var(--muted)">App commune Prof & Élèves • Cycle fractionné 12–15’</div>
+  <h1>RunCycle — Demi-fond</h1>
+  <div style="color:var(--muted)">App Prof & Élèves • Fractionné 12–15’</div>
 </header>
 <main>
   <div class="hero">
     <div class="card">
       <h2>👨‍🏫 Mode Prof</h2>
-      <p>Créez / chargez une séance type (S1..S5), générez un <b>code</b> simple à dicter.</p>
-      <a class="btn primary" href="./prof.html">Démarrer le mode Prof</a>
-      <ul>
-        <li>Accès sécurisé (code <b>57</b>)</li>
-        <li>Codes fixes : 101A, 202B, 303C, 404D, 505E</li>
-        <li>Possibilité de modifier / imposer un code court</li>
-      </ul>
+      <p>Choisissez S1..S5, obtenez un <b>code</b> simple à dicter.</p>
+      <a class="btn primary" href="./prof.html">Ouvrir le mode Prof</a>
+      <ul><li>Code d’accès : <b>57</b></li><li>Codes fixes : 101A, 202B, 303C, 404D, 505E</li></ul>
     </div>
     <div class="card">
       <h2>👩‍🎓 Mode Élèves</h2>
-      <p>Entrer le <b>code</b> prof, VMA & piste → cibles, chrono par blocs, saisie distances + RPE.</p>
-      <a class="btn ok" href="./eleve.html">Démarrer le mode Élèves</a>
-      <ul>
-        <li>Chrono effort / récup avec <b>arrêt automatique</b></li>
-        <li>QR DUO pour ScanProf</li>
-      </ul>
+      <p>Code → VMA & piste → cibles → chrono → saisie → QR DUO.</p>
+      <a class="btn ok" href="./eleve.html">Ouvrir le mode Élèves</a>
     </div>
   </div>
 </main>
-<footer>RunCycle — Équipe EPS Lycée Vauban — Luxembourg — JB</footer>
+<footer>RunCycle — EPS Lycée Vauban — Luxembourg — JB</footer>
 </body></html>
