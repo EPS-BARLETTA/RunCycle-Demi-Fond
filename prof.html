@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>RunCycle — Prof</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body class="wrap">
+  <header class="topbar"><h1>Mode Prof</h1><p class="subtitle">Créer / envoyer une séance</p></header>
+  <section id="gate" class="panel">
+    <div class="grid cols-3">
+      <div>
+        <label>Code Prof</label>
+        <input id="profCode" type="password" placeholder="••••"/>
+      </div>
+      <div class="row" style="align-items:end">
+        <button id="btnEnter" class="btn primary">Entrer</button>
+        <span class="small">Le code reste privé (hash local)</span>
+      </div>
+      <div></div>
+    </div>
+  </section>
+
+  <section id="builder" class="panel hidden">
+    <h2>📚 Modèles</h2>
+    <div id="templates" class="cardList"></div>
+    <hr/>
+    <h2>🛠️ Séance personnalisée</h2>
+    <div class="grid cols-3">
+      <div>
+        <label>Type</label>
+        <select id="type">
+          <option value="fractionne">Fractionné</option>
+          <option value="mangeplots">Mange plots</option>
+        </select>
+      </div>
+      <div>
+        <label>Répétitions</label>
+        <input id="reps" type="number" min="1" value="6"/>
+      </div>
+      <div>
+        <label>Travail (s)</label>
+        <input id="work" type="number" min="5" value="30"/>
+      </div>
+      <div>
+        <label>Récup (s)</label>
+        <input id="rest" type="number" min="5" value="30"/>
+      </div>
+      <div>
+        <label>Fenêtre mange plots</label>
+        <select id="window">
+          <option value="90">1:30</option>
+          <option value="180">3:00</option>
+          <option value="270">4:30</option>
+          <option value="360">6:00</option>
+        </select>
+      </div>
+      <div>
+        <label>Commentaires</label>
+        <input id="note" placeholder="Ex : rester relâché sur les bras"/>
+      </div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button id="btnGen" class="btn blue">Générer le code séance</button>
+      <button id="btnReset" class="btn ghost">Réinitialiser</button>
+    </div>
+    <hr/>
+    <div id="out" class="grid">
+      <div class="code" id="codeBox"></div>
+      <div class="row">
+        <button id="btnCopy" class="btn">Copier</button>
+        <a id="linkEleve" class="btn primary" href="#">Lien direct élèves</a>
+      </div>
+      <div class="qrBox"><div id="qr"></div></div>
+      <div class="small">Donner ce code ou le lien aux élèves. Tout est encodé (pas de serveur).</div>
+    </div>
+  </section>
+
+  <footer><div class="center small">Équipe EPS Lycée Vauban — Luxembourg — JB</div></footer>
+  <script type="module" src="prof.js"></script>
+</body>
+</html>

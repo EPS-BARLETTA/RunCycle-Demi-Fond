@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>RunCycle — Élèves</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body class="wrap">
+  <header class="topbar"><h1>Mode Élèves</h1><p class="subtitle">Saisir le code de séance, lancer le chrono, générer le QR</p></header>
+
+  <section class="panel">
+    <div class="grid cols-3">
+      <div>
+        <label>Code séance</label>
+        <input id="code" placeholder="Coller le code ou utiliser ?code=..."/>
+      </div>
+      <div>
+        <label>Nom Élève 1</label>
+        <input id="nom1" placeholder="Nom Prénom"/>
+      </div>
+      <div>
+        <label>Nom Élève 2</label>
+        <input id="nom2" placeholder="Nom Prénom"/>
+      </div>
+      <div>
+        <label>Classe</label>
+        <input id="classe" placeholder="4B"/>
+      </div>
+      <div>
+        <label>Longueur de piste (m)</label>
+        <input id="piste" type="number" min="50" step="0.5" value="200"/>
+      </div>
+      <div class="row" style="align-items:end">
+        <button id="btnLoad" class="btn blue">Charger séance</button>
+        <a class="btn" href="index.html">Accueil</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="sess" class="panel hidden">
+    <h2>📋 Détails séance</h2>
+    <div id="cfg"></div>
+    <hr/>
+    <div id="uiFractionne" class="hidden">
+      <div class="row">
+        <button id="startF" class="btn primary">▶︎ Start</button>
+        <button id="pauseF" class="btn">⏸︎ Pause</button>
+        <button id="resetF" class="btn ghost">⟲ Reset</button>
+        <button id="lapF" class="btn warn">+1 tour</button>
+      </div>
+      <div class="row"><div class="badge">Chrono</div><div id="chronoF" class="code">00:00</div><div class="badge">Phase</div><div id="phaseF" class="code">Repos</div></div>
+      <div class="row"><div class="badge">Répétition</div><div id="repF" class="code">0</div><div class="badge">Tours</div><div id="lapsF" class="code">0</div></div>
+    </div>
+
+    <div id="uiMange" class="hidden">
+      <div class="row">
+        <label>Fenêtre</label>
+        <select id="winSel">
+          <option value="90">1:30</option>
+          <option value="180">3:00</option>
+          <option value="270">4:30</option>
+          <option value="360">6:00</option>
+        </select>
+        <button id="startM" class="btn primary">▶︎ Start</button>
+        <button id="pauseM" class="btn">⏸︎ Pause</button>
+        <button id="resetM" class="btn ghost">⟲ Reset</button>
+      </div>
+      <div class="row"><div class="badge">Chrono</div><div id="chronoM" class="code">00:00</div></div>
+      <div class="row"><button id="minusP" class="btn">−</button><div class="code" id="plots" style="min-width:80px;text-align:center">0</div><button id="plusP" class="btn">+</button><span class="small">Plots mangés (12,5 m)</span></div>
+      <div class="row"><div class="badge">Vitesse</div><div id="speedM" class="code">0.0 km/h</div></div>
+    </div>
+
+    <hr/>
+    <h2>📦 Export</h2>
+    <div class="grid cols-3">
+      <div class="qrBox"><div id="qr"></div></div>
+      <div>
+        <div class="small">Données brutes</div>
+        <pre class="code" id="jsonOut"></pre>
+      </div>
+      <div class="row" style="align-items:start">
+        <button id="btnQR" class="btn blue">Générer le QR</button>
+        <button id="btnClear" class="btn ghost">Effacer</button>
+      </div>
+    </div>
+  </section>
+
+  <footer><div class="center small">Équipe EPS Lycée Vauban — Luxembourg — JB</div></footer>
+  <script src="qrcode.min.js"></script>
+  <script type="module" src="eleve.js"></script>
+</body>
+</html>
